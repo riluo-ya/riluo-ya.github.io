@@ -191,4 +191,80 @@
                 opacity: 1;
             }
             90% {
-               
+                opacity: 1;
+            }
+            to {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .profile-card {
+                padding: 40px 25px;
+            }
+            
+            h1 {
+                font-size: 28px;
+            }
+            
+            .subtitle {
+                font-size: 16px;
+            }
+            
+            .link-btn {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <img class="bg-image" src="/bg.png" alt="Background">
+    <div class="bg-overlay"></div>
+    
+    <div class="floating-notes">
+        <div class="note" style="left: 10%; animation-delay: 0s;">♪</div>
+        <div class="note" style="left: 20%; animation-delay: 2s;">♫</div>
+        <div class="note" style="left: 30%; animation-delay: 4s;">♪</div>
+        <div class="note" style="left: 40%; animation-delay: 6s;">♩</div>
+        <div class="note" style="left: 50%; animation-delay: 8s;">♫</div>
+        <div class="note" style="left: 60%; animation-delay: 10s;">♪</div>
+        <div class="note" style="left: 70%; animation-delay: 12s;">♩</div>
+        <div class="note" style="left: 80%; animation-delay: 14s;">♫</div>
+        <div class="note" style="left: 90%; animation-delay: 16s;">♪</div>
+    </div>
+
+    <div class="container">
+        <div class="profile-card">
+            <div class="avatar">
+                <img src="/tx.jpg" alt="日落的头像">
+            </div>
+            <h1>日落</h1>
+            <p class="subtitle">00后 · 音游爱好者</p>
+            
+            <div class="tags">
+                <span class="tag">Phigros</span>
+                <span class="tag">Phira</span>
+                <span class="tag">节奏大师</span>
+                <span class="tag">世界计划</span>
+                <span class="tag">Muse Dash</span>
+                <span class="tag">RYCEAM</span>
+                <span class="tag">Milthm</span>
+            </div>
+            
+            <div class="links">
+                <a href="https://b23.tv/xxR8LFI" class="link-btn" target="_blank">
+                    <span>📺</span> B站主页
+                </a>
+                <a href="https://v.douyin.com/dsvCjYKKogA/" class="link-btn" target="_blank">
+                    <span>🎵</span> 抖音
+                </a>
+                <a href="https://qm.qq.com/q/Ydt9lZkmeO" class="link-btn" target="_blank">
+                    <span>💬</span> 加我QQ
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
