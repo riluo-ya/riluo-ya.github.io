@@ -3,268 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日落 - 音游爱好者</title>
+    <title>日落 - 个人介绍</title>
+    <script src="https://cdn.tailwindcss.com/3.3.3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
-            background: #000;
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
-            color: #1a1a1a;
-        }
-
-        .bg-image {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: -2;
-        }
-
-        .bg-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            z-index: -1;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-
-        .profile-card {
-            background: rgba(15, 15, 15, 0.65);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 30px;
-            padding: 60px;
-            text-align: center;
-            animation: fadeInUp 1s ease-out;
-            max-width: 520px;
-            width: 100%;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            margin: 0 auto 30px;
-            border: 2px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-            overflow: hidden;
-            background: #111;
-            transition: transform 0.3s ease;
-        }
-
-        .avatar:hover {
-            transform: scale(1.05);
-        }
-
-        .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        h1 {
-            font-size: 36px;
-            color: #f5f5f5;
-            margin-bottom: 10px;
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-
-        .subtitle {
-            font-size: 18px;
-            color: #bbb;
-            margin-bottom: 40px;
-            letter-spacing: 0.5px;
-        }
-
-        .tags {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 40px;
-        }
-
-        .tag {
-            background: rgba(255, 255, 255, 0.08);
-            padding: 6px 16px;
-            border-radius: 18px;
-            color: #ddd;
-            font-size: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .tag:hover {
-            background: rgba(255, 255, 255, 0.12);
-            transform: translateY(-2px);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .links {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .link-btn {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #f5f5f5;
-            padding: 12px 30px;
-            border-radius: 25px;
-            text-decoration: none;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            letter-spacing: 0.5px;
-            backdrop-filter: blur(8px);
-        }
-
-        .link-btn:hover {
-            background: rgba(255, 255, 255, 0.12);
-            transform: translateY(-3px);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-            border-color: rgba(255, 255, 255, 0.25);
-        }
-
-        .floating-notes {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: -1;
-        }
-
-        .note {
-            position: absolute;
-            color: rgba(255, 255, 255, 0.05);
-            font-size: 30px;
-            animation: float 20s infinite linear;
-            pointer-events: none;
-        }
-
         @keyframes float {
-            from {
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            to {
-                transform: translateY(-100vh) rotate(360deg);
-                opacity: 0;
-            }
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
-
-        @media (max-width: 600px) {
-            .profile-card {
-                padding: 40px 25px;
-            }
-            
-            h1 {
-                font-size: 28px;
-            }
-            
-            .subtitle {
-                font-size: 16px;
-            }
-            
-            .link-btn {
-                padding: 10px 20px;
-                font-size: 14px;
-            }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
     </style>
 </head>
-<body>
-    <img class="bg-image" src="/bg.png" alt="Background">
-    <div class="bg-overlay"></div>
-    
-    <div class="floating-notes">
-        <div class="note" style="left: 10%; animation-delay: 0s;">♪</div>
-        <div class="note" style="left: 20%; animation-delay: 2s;">♫</div>
-        <div class="note" style="left: 30%; animation-delay: 4s;">♪</div>
-        <div class="note" style="left: 40%; animation-delay: 6s;">♩</div>
-        <div class="note" style="left: 50%; animation-delay: 8s;">♫</div>
-        <div class="note" style="left: 60%; animation-delay: 10s;">♪</div>
-        <div class="note" style="left: 70%; animation-delay: 12s;">♩</div>
-        <div class="note" style="left: 80%; animation-delay: 14s;">♫</div>
-        <div class="note" style="left: 90%; animation-delay: 16s;">♪</div>
-    </div>
+<body class="min-h-screen bg-cover bg-center" style="background-image: url('/bg.png');">
+    <div class="container mx-auto px-4 py-12">
+        <div class="max-w-3xl mx-auto">
+            <!-- 个人信息 -->
+            <div class="glassmorphism p-8 mb-8 shadow-lg">
+                <div class="flex flex-col md:flex-row items-center">
+                    <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg mb-4 md:mb-0 md:mr-6 animate-float">
+                        <img src="/touxiang.jpg" alt="头像" class="w-full h-full object-cover">
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800 mb-2">日落</h1>
+                        <p class="text-lg text-gray-600">00后，喜欢音游</p>
+                    </div>
+                </div>
+            </div>
 
-    <div class="container">
-        <div class="profile-card">
-            <div class="avatar">
-                <img src="/tx.jpg" alt="日落的头像">
+            <!-- 音游列表 -->
+            <div class="glassmorphism p-6 mb-8 shadow-lg">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-music mr-3 text-purple-500"></i>我的音游
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Phigros -->
+                    <div class="card-hover bg-white rounded-xl p-4 shadow-md" onclick="redirectToGame('Phigros')">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center text-white mr-3">
+                                <i class="fas fa-gamepad"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">Phigros</h3>
+                                <p class="text-sm text-gray-500">点击跳转下载</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phira -->
+                    <div class="card-hover bg-white rounded-xl p-4 shadow-md" onclick="window.open('https://phira.moe/','_blank')">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-500 flex items-center justify-center text-white mr-3">
+                                <i class="fas fa-gamepad"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">Phira</h3>
+                                <p class="text-sm text-gray-500">点击跳转官网</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 节奏大师 -->
+                    <div class="card-hover bg-white rounded-xl p-4 shadow-md" onclick="window.open('https://da.qq.com/','_blank')">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center text-white mr-3">
+                                <i class="fas fa-gamepad"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">节奏大师</h3>
+                                <p class="text-sm text-gray-500">点击跳转官网</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 初音未来:缤纷舞台 -->
+                    <div class="card-hover bg-white rounded-xl p-4 shadow-md" onclick="window.open('https://pjsk.nvsgames.cn/','_blank')">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-r from-green-400 to-teal-500 flex items-center justify-center text-white mr-3">
+                                <i class="fas fa-gamepad"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">初音未来:缤纷舞台</h3>
+                                <p class="text-sm text-gray-500">点击跳转官网</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 喵斯快跑 -->
+                    <div class="card-hover bg-white rounded-xl p-4 shadow-md" onclick="window.open('https://musedash.peropero.net/','_blank')">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-r from-pink-400 to-red-500 flex items-center justify-center text-white mr-3">
+                                <i class="fas fa-gamepad"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">喵斯快跑</h3>
+                                <p class="text-sm text-gray-500">点击跳转官网</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RYCEAM -->
+                    <div class="card-hover bg-white rounded-xl p-4 shadow-md" onclick="redirectToGame('RYCEAM')">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center text-white mr-3">
+                                <i class="fas fa-gamepad"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">RYCEAM</h3>
+                                <p class="text-sm text-gray-500">点击跳转下载</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Milthm -->
+                    <div class="card-hover bg-white rounded-xl p-4 shadow-md" onclick="window.open('https://milthm.com/','_blank')">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center text-white mr-3">
+                                <i class="fas fa-gamepad"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">Milthm</h3>
+                                <p class="text-sm text-gray-500">点击跳转官网</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notanote -->
+                    <div class="card-hover bg-white rounded-xl p-4 shadow-md" onclick="window.open('https://www.notanote.cn/','_blank')">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-r from-orange-400 to-red-500 flex items-center justify-center text-white mr-3">
+                                <i class="fas fa-gamepad"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">Notanote</h3>
+                                <p class="text-sm text-gray-500">点击跳转官网</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <h1>日落</h1>
-            <p class="subtitle">00后 · 音游爱好者</p>
-            
-            <div class="tags">
-                <span class="tag">Phigros</span>
-                <span class="tag">Phira</span>
-                <span class="tag">节奏大师</span>
-                <span class="tag">世界计划</span>
-                <span class="tag">Muse Dash</span>
-                <span class="tag">RYCEAM</span>
-                <span class="tag">Milthm</span>
-            </div>
-            
-            <div class="links">
-                <a href="https://b23.tv/xxR8LFI" class="link-btn" target="_blank">
-                    <span>📺</span> B站主页
-                </a>
-                <a href="https://v.douyin.com/dsvCjYKKogA/" class="link-btn" target="_blank">
-                    <span>🎵</span> 抖音
-                </a>
-                <a href="https://qm.qq.com/q/Ydt9lZkmeO" class="link-btn" target="_blank">
-                    <span>💬</span> 加我QQ
-                </a>
+
+            <!-- 联系方式 -->
+            <div class="glassmorphism p-6 shadow-lg">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-link mr-3 text-blue-500"></i>联系方式
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <a href="https://b23.tv/xxR8LFI" target="_blank" class="card-hover bg-white rounded-xl p-4 shadow-md flex items-center">
+                        <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white mr-3">
+                            <i class="fab fa-bilibili"></i>
+                        </div>
+                        <span class="font-medium">B站主页</span>
+                    </a>
+                    <a href="https://v.douyin.com/dsvCjYKKogA/" target="_blank" class="card-hover bg-white rounded-xl p-4 shadow-md flex items-center">
+                        <div class="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center text-white mr-3">
+                            <i class="fab fa-tiktok"></i>
+                        </div>
+                        <span class="font-medium">抖音</span>
+                    </a>
+                    <a href="https://qm.qq.com/q/Ydt9lZkmeO" target="_blank" class="card-hover bg-white rounded-xl p-4 shadow-md flex items-center">
+                        <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white mr-3">
+                            <i class="fab fa-qq"></i>
+                        </div>
+                        <span class="font-medium">加我QQ</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
+
+    <footer class="text-center py-6 text-gray-500 text-sm">
+        <p>By<a href="https://riluo-ya.github.io/" class="text-blue-500 hover:underline">日落-ya</a></p>
+        <p>我爱你！！！</p>
+    </footer>
+
+    <script>
+        // 设备检测函数
+        function detectDevice() {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            if (/android/i.test(userAgent)) return 'android';
+            if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) return 'ios';
+            return 'other';
+        }
+
+        // 游戏跳转函数
+        function redirectToGame(game) {
+            const device = detectDevice();
+            switch(game) {
+                case 'Phigros':
+                    if (device === 'android') {
+                        window.open('https://www.taptap.cn/app/165287', '_blank');
+                    } else if (device === 'ios') {
+                        window.open('https://apps.apple.com/cn/app/phigros/id1454809109', '_blank');
+                    } else {
+                        window.open('https://www.taptap.cn/app/165287', '_blank');
+                    }
+                    break;
+                case 'RYCEAM':
+                    if (device === 'android') {
+                        window.open('https://www.taptap.cn/app/237034', '_blank');
+                    } else if (device === 'ios') {
+                        window.open('https://apps.apple.com/cn/app/ryceam/id1632809835', '_blank');
+                    } else {
+                        window.open('https://www.taptap.cn/app/237034', '_blank');
+                    }
+                    break;
+            }
+        }
+
+        // 添加浮动动画
+        document.addEventListener('DOMContentLoaded', function() {
+            const avatar = document.querySelector('.animate-float');
+            if (avatar) {
+                avatar.style.animation = 'float 3s ease-in-out infinite';
+            }
+        });
+    </script>
 </body>
 </html>
