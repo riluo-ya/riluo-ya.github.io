@@ -1,53 +1,65 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# Phira-MP Termux 一键构建脚本
-# 如果访问 GitHub 慢，可以手动设置镜像：export GITHUB_MIRROR=https://ghproxy.com/https://github.com
+# ======================================================
+#  phira-mp-server 一键部署脚本 for Termux
+#  2025-08-13
+# ======================================================
 
-set -e                          # 遇到错误立即退出
-trap 'echo "❌ 脚本运行失败，请检查日志" >&2' ERR
+set -e   # 遇到错误立即退出
 
 # 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-NC='\033[0m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
-echo -e "${GREEN}==> 1. 更新 Termux 软件包${NC}"
+echo -e "${GREEN}[*] 开始 phira-mp-server 一键部署 …${NC}"
+
+# ------------------------------------------------------
+# 1. 更新 Termux 仓库并安装系统依赖
+# ------------------------------------------------------
+echo -e "${YELLOW}[1/5] 更新 Termux 软件源并安装依赖 …${NC}"
 pkg update -y && pkg upgrade -y
+pkg install -y git curl build-essential pkg-config openssl openssl-tool openssl-dev
 
-echo -e "${GREEN}==> 2. 安装系统依赖${NC}"
-pkg install -y \
-    git curl build-essential openssl-tool \
-    pkg-config libssl-dev proot-distro
-
-echo -e "${GREEN}==> 3. 安装 Rust（若已安装则跳过）${NC}"
-if ! command -v rustc &>/dev/null; then
+# ------------------------------------------------------
+# 2. 检查并安装 Rust（若未安装）
+# ------------------------------------------------------
+if ! command -v rustc &> /dev/null; then
+    echo -e "${YELLOW}[2/5] 未检测到 Rust，开始安装 …${NC}"
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
     source "$HOME/.cargo/env"
 else
-    echo "Rust 已安装，跳过"
+    echo -e "${YELLOW}[2/5] Rust 已安装，跳过 …${NC}"
 fi
 
-# 选择仓库（支持 IPv6 的镜像）
-REPO_URL="https://github.com/afoim/phira-mp-autobuild.git"
-DIR_NAME="phira-mp-autobuild"
+# 确保 cargo 在 PATH
+export PATH="$HOME/.cargo/bin:$PATH"
 
-echo -e "${GREEN}==> 4. 克隆仓库${NC}"
-if [[ -d "$DIR_NAME" ]]; then
-    echo "目录已存在，拉取最新代码..."
-    cd "$DIR_NAME"
+# ------------------------------------------------------
+# 3. 克隆/更新 phira-mp 仓库
+# ------------------------------------------------------
+REPO_DIR="$HOME/phira-mp"
+
+if [[ -d "$REPO_DIR/.git" ]]; then
+    echo -e "${YELLOW}[3/5] 仓库已存在，拉取最新代码 …${NC}"
+    cd "$REPO_DIR"
     git pull --ff-only
 else
-    git clone --depth=1 "$REPO_URL" "$DIR_NAME"
-    cd "$DIR_NAME"
+    echo -e "${YELLOW}[3/5] 克隆 phira-mp 仓库 …${NC}"
+    git clone https://github.com/TeamFlos/phira-mp.git "$REPO_DIR"
+    cd "$REPO_DIR"
 fi
 
-echo -e "${GREEN}==> 5. 更新并构建 phira-mp-server${NC}"
+# ------------------------------------------------------
+# 4. 更新依赖并编译
+# ------------------------------------------------------
+echo -e "${YELLOW}[4/5] 更新依赖并编译 phira-mp-server …${NC}"
 cargo update
 cargo build --release -p phira-mp-server
 
-echo -e "${GREEN}==> 6. 启动服务器${NC}"
-echo -e "${YELLOW}默认监听 12345 端口，如需自定义，请 Ctrl+C 后手动加参数：${NC}"
-echo -e "   RUST_LOG=info ./target/release/phira-mp-server --port 8080\n"
-
-# 直接运行
+# ------------------------------------------------------
+# 5. 运行服务器
+# ------------------------------------------------------
+echo -e "${GREEN}[5/5] 编译完成，启动服务器 …${NC}"
+echo -e "${GREEN}------------------------------------------------------${NC}"
 RUST_LOG=info ./target/release/phira-mp-server
