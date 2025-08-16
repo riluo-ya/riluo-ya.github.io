@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>后台登录 · 日落-ya</title>
+    <script src="https://cdn.tailwindcss.com/3.4.4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        body{
+            background:linear-gradient(135deg,#f5f7fa 0%,#e4edf5 100%);
+            font-family:"PingFang SC","Helvetica Neue",Helvetica,Arial,sans-serif;
+        }
+        .glass{
+            background:rgba(255,255,255,.65);
+            backdrop-filter:blur(20px);
+            border:1px solid rgba(255,255,255,.35);
+            box-shadow:0 20px 40px -10px rgba(31,38,135,.15);
+            transition:all .4s cubic-bezier(.4,0,.2,1);
+        }
+        .glass:hover{
+            transform:translateY(-4px);
+            box-shadow:0 25px 50px -12px rgba(31,38,135,.25);
+        }
+        .btn-primary{
+            background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);
+            box-shadow:0 4px 14px 0 rgba(99,102,241,.4);
+            transition:all .3s;
+        }
+        .btn-primary:hover{
+            box-shadow:0 6px 20px 0 rgba(99,102,241,.55);
+        }
+        /* 全屏成功遮罩 */
+        .overlay{
+            position:fixed;inset:0;
+            background:rgba(0,0,0,.45);
+            backdrop-filter:blur(8px);
+            display:flex;align-items:center;justify-content:center;
+            z-index:999;
+            animation:fadeIn .3s ease-out forwards;
+        }
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        .overlay-card{
+            width:90%;max-width:420px;
+            animation:pop .35s ease-out forwards;
+        }
+        @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+        /* 错误 Toast */
+        .toast-error{
+            position:fixed;top:-80px;left:50%;
+            transform:translateX(-50%);
+            z-index:1000;
+            transition:top .4s;
+        }
+        .toast-error.show{top:24px;}
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+<!-- 主卡片 -->
+<div class="w-full max-w-sm">
+    <div class="glass rounded-2xl p-8">
+        <div class="text-center mb-7">
+            <i class="fas fa-user-shield text-indigo-500 text-4xl mb-2"></i>
+            <h1 class="text-2xl font-bold text-slate-800">后台登录</h1>
+            <p class="text-xs text-slate-500 mt-1">默认用户名、密码均为 <span class="font-semibold text-indigo-500">admin</span></p>
+        </div>
+
+        <form id="loginForm" class="space-y-5">
+            <div>
+                <label for="username" class="block text-sm font-medium text-slate-700 mb-1">用户名</label>
+                <input id="username" name="username" type="text" required
+                       class="w-full px-4 py-2.5 rounded-lg bg-white/70 border border-slate-300
+                              focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="请输入用户名" />
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-slate-700 mb-1">密码</label>
+                <input id="password" name="password" type="password" required
+                       class="w-full px-4 py-2.5 rounded-lg bg-white/70 border border-slate-300
+                              focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="请输入密码" />
+            </div>
+
+            <button type="submit" id="loginBtn"
+                    class="w-full btn-primary text-white py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2">
+                <span id="btnText">登录</span>
+                <i id="btnLoader" class="hidden fas fa-spinner fa-spin"></i>
+            </button>
+        </form>
+    </div>
+
+    <p class="text-center text-xs text-slate-400 mt-5">
+        created by <a href="https://b23.tv/utkIZzK" target="_blank" class="text-indigo-500 hover:underline">日落-ya</a>
+    </p>
+</div>
+
+<!-- 全屏成功提示 -->
+<div id="overlay" class="overlay hidden">
+    <div class="overlay-card glass rounded-2xl p-6 text-center">
+        <i class="fas fa-check-circle text-green-500 text-5xl mb-4"></i>
+        <h2 class="text-xl font-bold text-slate-800 mb-2">登录成功</h2>
+        <p class="text-slate-600 mb-1">正在为您跳转…</p>
+        <p class="text-sm text-red-600 font-semibold mt-3">
+            <i class="fas fa-exclamation-triangle mr-1"></i>
+            切勿将账号密码泄露给他人！
+        </p>
+        <div class="mt-5 flex justify-center">
+            <div class="w-10 h-1 bg-indigo-500 rounded-full animate-pulse"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 错误提示 Toast -->
+<div id="errToast" class="toast-error hidden">
+    <div class="px-5 py-2.5 rounded-full bg-red-500 text-white font-medium flex items-center gap-2 shadow-lg">
+        <i class="fas fa-times-circle"></i>
+        <span>账号或密码错误，请重试！</span>
+    </div>
+</div>
+
+<script>
+const form   = document.getElementById('loginForm');
+const overlay= document.getElementById('overlay');
+const errToast=document.getElementById('errToast');
+const btn    = document.getElementById('loginBtn');
+const btnTxt = document.getElementById('btnText');
+const loader = document.getElementById('btnLoader');
+
+function showError(){
+    errToast.classList.remove('hidden');
+    setTimeout(()=>errToast.classList.add('hidden'),2000);
+}
+
+form.addEventListener('submit', e => {
+    e.preventDefault();
+    const user = form.username.value.trim();
+    const pwd  = form.password.value.trim();
+
+    if (user === 'admin' && pwd === 'admin') {
+        /* 显示 loading */
+        btn.disabled = true;
+        btnTxt.textContent = '登录中…';
+        loader.classList.remove('hidden');
+
+        /* 展示全屏提示 */
+        overlay.classList.remove('hidden');
+
+        /* 3 秒后跳转 */
+        setTimeout(() => {
+            location.href = 'https://www.bilibili.com/blackboard/webplayer/mbplayer.html?isOutside=true&aid=80433022&bvid=BV1GJ411x7h7&cid=137649199&p=1';
+        }, 3000);
+    } else {
+        /* 显示错误 Toast */
+        showError();
+        form.password.focus();
+        form.password.classList.add('ring-2','ring-red-400');
+        setTimeout(()=>form.password.classList.remove('ring-2','ring-red-400'),1000);
+    }
+});
+</script>
+</body>
+</html>
