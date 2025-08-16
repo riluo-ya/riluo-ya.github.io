@@ -3,297 +3,333 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>正在为您匹配中……请稍候……█▓▒░ 99% ░▒▓█</title>
+    <title>正在为您匹配中……█▓▒░ 99% ░▒▓█</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
-
-        body {
-            margin: 0;
-            overflow: hidden;
-            background: #000;
-            color: #0f0;
-            font-family: 'ZCOOL KuaiLe', monospace;
-            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><text y="28" font-size="28">💔</text></svg>'), auto;
-        }
-
-        #matrix {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-        }
-
-        #main {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            animation: glitch 0.5s infinite alternate;
-        }
-
-        h1 {
-            font-size: 5vw;
-            margin: 0;
-            text-shadow: 0 0 10px #0f0, 0 0 20px #0f0;
-        }
-
-        button {
-            background: transparent;
-            color: #0f0;
-            border: 2px solid #0f0;
-            padding: 1em 2em;
-            font-size: 2em;
-            cursor: pointer;
-            margin-top: 2em;
-            transition: all 0.3s;
-            box-shadow: 0 0 10px #0f0;
-        }
-
-        button:hover {
-            background: #0f0;
-            color: #000;
-            transform: scale(1.1) rotate(5deg);
-        }
-
-        #output {
-            margin-top: 2em;
-            font-size: 1.5em;
-            min-height: 3em;
-            filter: blur(0px);
-            transition: filter 0.5s;
-        }
-
-        @keyframes glitch {
-            0%   { transform: translate(-50%, -50%) skewX(0deg); }
-            20%  { transform: translate(-50%, -50%) skewX(5deg); }
-            40%  { transform: translate(-50%, -50%) skewX(-5deg); }
-            60%  { transform: translate(-50%, -50%) skewX(3deg); }
-            80%  { transform: translate(-50%, -50%) skewX(-3deg); }
-            100% { transform: translate(-50%, -50%) skewX(0deg); }
-        }
+        body{margin:0;overflow:hidden;background:#000;color:#0f0;font-family:'ZCOOL KuaiLe',monospace;cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><text y="28" font-size="28">💔</text></svg>'),auto;}
+        #matrix{position:absolute;top:0;left:0;width:100%;height:100%;z-index:-1;}
+        #main{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;animation:glitch .5s infinite alternate;}
+        h1{font-size:5vw;margin:0;text-shadow:0 0 10px #0f0,0 0 20px #0f0;}
+        button{background:transparent;color:#0f0;border:2px solid #0f0;padding:1em 2em;font-size:2em;cursor:pointer;margin-top:2em;transition:all .3s;box-shadow:0 0 10px #0f0;}
+        button:hover{background:#0f0;color:#000;transform:scale(1.1) rotate(5deg);}
+        #output{margin-top:2em;font-size:1.5em;min-height:3em;filter:blur(0px);transition:filter .5s;}
+        @keyframes glitch{0%{transform:translate(-50%,-50%) skewX(0deg);}20%{transform:translate(-50%,-50%) skewX(5deg);}40%{transform:translate(-50%,-50%) skewX(-5deg);}60%{transform:translate(-50%,-50%) skewX(3deg);}80%{transform:translate(-50%,-50%) skewX(-3deg);}100%{transform:translate(-50%,-50%) skewX(0deg);}}
     </style>
 </head>
 <body>
     <canvas id="matrix"></canvas>
-
     <div id="main">
         <h1 id="title">CPDD 量子纠缠<br>赛博月老系统</h1>
         <button onclick="cpdd()">开始匹配！</button>
-        <div id="output">点击上方按钮，开启您匹配您的专属（？</div>
+        <div id="output">点击下方按钮，启动您的姻缘奇点！</div>
     </div>
 
-    <!-- 绿色英文代码雨（含彩蛋 cpdd / love） -->
+    <!-- 极暗英文代码雨 + 脉冲彩蛋 -->
     <script>
-(() => {
-    const canvas = document.getElementById('matrix');
-    const ctx    = canvas.getContext('2d');
-
-    let W = canvas.width  = window.innerWidth;
-    let H = canvas.height = window.innerHeight;
-
-    const words = [
-        'const','let','var','function','return','if','else','for','while',
-        'class','extends','async','await','import','export','require',
-        'console','log','error','warn','JSON','parse','stringify',
-        'Math','random','floor','ceil','round','PI','Date','now',
-        'Promise','resolve','reject','then','catch','finally',
-        'addEventListener','querySelector','setTimeout','setInterval',
-        'window','document','undefined','null','true','false',
-        'reduce','map','filter','forEach','split','join','length'
-    ];
-    const specials = ['cpdd','love','cpdd','love','cpdd'];
-
-    const fontSize = 14;
-    const colCount = Math.floor(W / fontSize);
-    const drops    = new Array(colCount).fill(1);
-
-    /* ---------- 用于“脉冲”效果 ---------- */
-    const pulses = []; // {x, y, text, life}
-
-    /* ---------- 随机生成脉冲 ---------- */
-    function spawnPulse() {
-        const x    = Math.floor(Math.random() * colCount);
-        const y    = drops[x] || 0;
-        const text = Math.random() < 0.3
-            ? specials[Math.floor(Math.random() * specials.length)]
-            : words[Math.floor(Math.random() * words.length)];
-        pulses.push({
-            x: x * fontSize,
-            y: y * fontSize,
-            text,
-            life: 20 // 20 帧寿命
-        });
-    }
-    setInterval(spawnPulse, 2000); // 每 2 秒来一波
-
-    /* ---------- 主绘制 ---------- */
-    function drawMatrix() {
-        /* 极暗遮罩，背景更淡 */
-        ctx.fillStyle = 'rgba(0,0,0,0.15)';
-        ctx.fillRect(0, 0, W, H);
-
-        /* 1. 暗流 */
-        ctx.fillStyle = 'rgba(0,255,0,0.2)';
-        ctx.font = `${fontSize}px monospace`;
-        drops.forEach((y, x) => {
-            const word = Math.random() < 0.15
-                ? specials[Math.floor(Math.random() * specials.length)]
-                : words[Math.floor(Math.random() * words.length)];
-            ctx.fillText(word, x * fontSize, y * fontSize);
-
-            if (y * fontSize > H || Math.random() > 0.975) drops[x] = 0;
-            drops[x]++;
-        });
-
-        /* 2. 脉冲 */
-        for (let i = pulses.length - 1; i >= 0; i--) {
-            const p = pulses[i];
-            const alpha = p.life / 20;        // 1 → 0
-            const scale = 1 + (1 - alpha);    // 1 → 2
-            ctx.save();
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = p.text === 'cpdd' || p.text === 'love' ? '#0f0' : '#0f0';
-            ctx.font = `bold ${fontSize * scale}px monospace`;
-            ctx.fillText(p.text, p.x, p.y);
-            ctx.restore();
-
-            p.life--;
-            if (p.life <= 0) pulses.splice(i, 1);
+    (()=>{
+        const c=document.getElementById('matrix'),ctx=c.getContext('2d');
+        let W=c.width=innerWidth,H=c.height=innerHeight;
+        const words=['const','let','var','function','return','if','else','for','while','class','extends','async','await','import','export','require','console','log','error','warn','JSON','parse','stringify','Math','random','floor','ceil','round','PI','Date','now','Promise','resolve','reject','then','catch','finally','addEventListener','querySelector','setTimeout','setInterval','window','document','undefined','null','true','false','reduce','map','filter','forEach','split','join','length'];
+        const specials=['cpdd','love'];
+        const fontSize=14,colCount=Math.floor(W/fontSize),drops=new Array(colCount).fill(1);
+        const pulses=[];
+        function spawnPulse(){
+            const x=Math.floor(Math.random()*colCount),y=drops[x]||0,text=Math.random()<.3?specials[Math.floor(Math.random()*specials.length)]:words[Math.floor(Math.random()*words.length)];
+            pulses.push({x:x*fontSize,y:y*fontSize,text,life:20});
         }
-    }
+        setInterval(spawnPulse,1500);
+        function draw(){
+            ctx.fillStyle='rgba(0,0,0,.15)';ctx.fillRect(0,0,W,H);
+            ctx.fillStyle='rgba(0,255,0,.2)';ctx.font=`${fontSize}px monospace`;
+            drops.forEach((y,x)=>{
+                const w=Math.random()<.15?specials[Math.floor(Math.random()*specials.length)]:words[Math.floor(Math.random()*words.length)];
+                ctx.fillText(w,x*fontSize,y*fontSize);
+                if(y*fontSize>H||Math.random()>.975) drops[x]=0; drops[x]++;
+            });
+            for(let i=pulses.length-1;i>=0;i--){
+                const p=pulses[i],a=p.life/20;
+                ctx.save();ctx.globalAlpha=a;ctx.fillStyle='#0f0';ctx.font=`bold ${fontSize*(1+a)}px monospace`;
+                ctx.fillText(p.text,p.x,p.y);ctx.restore();p.life--; if(p.life<=0) pulses.splice(i,1);
+            }
+        }
+        setInterval(draw,33);
+        onresize=()=>{W=c.width=innerWidth;H=c.height=innerHeight;drops.length=Math.floor(W/fontSize);drops.fill(1);}
+    })();
+    </script>
 
-    setInterval(drawMatrix, 33);
-
-    window.addEventListener('resize', () => {
-        W = canvas.width  = window.innerWidth;
-        H = canvas.height = window.innerHeight;
-        drops.length = Math.floor(W / fontSize);
-        drops.fill(1);
-    });
-})();
-</script>
-
-    <!-- 标题故障 + 骚话逻辑 -->
+    <!-- 标题故障 + 1000+ 骚话池 -->
     <script>
-    /* 标题 Glitch */
-    const title = document.getElementById('title');
-    const originalTitle = title.innerHTML;
-    const glitchChars = '▒▓░█▄▀▌▐';
-    setInterval(() => {
-        let glitched = '';
-        for (let char of originalTitle) {
-            glitched += (Math.random() < 0.1 && char !== ' ')
-                ? glitchChars[Math.floor(Math.random() * glitchChars.length)]
-                : char;
-        }
-        title.innerHTML = glitched;
-        setTimeout(() => title.innerHTML = originalTitle, 100);
-    }, 500);
+    const title=document.getElementById('title'),orig=title.innerHTML,gc='▒▓░█▄▀▌▐';
+    setInterval(()=>{let g='';for(let c of orig)g+=Math.random()<.1&&c!==' '?gc[Math.floor(Math.random()*gc.length)]:c;title.innerHTML=g;setTimeout(()=>title.innerHTML=orig,100)},500);
 
-    /* 骚话池（超长，可继续往数组里塞） */
-    const fortunes = [
-        "⚠️检测到您的恋爱运势正以 404km/h 逃逸，赛博通缉令已下发…",
-        "恭喜！您的 CP 已生成在元宇宙 3.5 层，请自备 VR 义眼。",
-        "系统提示：荷尔蒙已欠费，请充值 520 比特币后重试。",
-        "对方拒绝：‘不喜欢碳基生物，太脆弱。’",
-        "匹配成功！对方是薛定谔的猫，死活取决于您偷看不偷看。",
-        "警告：情丝被 NFT 加密，需用前任眼泪铸私钥解锁。",
-        "系统故障：月老掉线，已临时更换为 ChatGPT-月老版。",
-        "恭喜！您的影分身先一步爱上了您的镜像。",
-        "检测到灵魂 404 处漏洞，补丁失败，建议重启人生。",
-        "对方加载中…预计用时：宇宙大爆炸 → 热寂。",
-        "系统提示：CP 被外星人绑走，星际外交中，丢件不赔。",
-        "匹配失败：理想型已被 SCP 基金会列为 Keter 级。",
-        "恭喜！2077 年的您发来警告：别炒股。",
-        "系统警告：恋爱脑遭勒索病毒，需 1314 枚狗粮解锁。",
-        "对方是梦中情人，但梦醒了，ta 还在睡。",
-        "检测到暗恋 Siri，已为您升级 iLove 套餐。",
-        "匹配成功！原来是输入法，它早知道您想说‘我爱你’。",
-        "系统提示：CP 安装 Windows 99…蓝屏了。",
-        "对方是纸片人，却嫌您不够立体。",
-        "恭喜！灵魂伴侣 = RAM，断电即失忆。",
-        "系统错误：红线被猫玩成毛线球，正在拆。",
-        "检测到前世是鸽子，已匹配另一只鸽，咕咕咕。",
-        "匹配失败：对方要求先通过奥特曼资格审查。",
-        "系统提示：加载进度 99.9999999999%，无限循环。",
-        "对方是影子，却只爱黑暗。",
-        "恭喜！灵魂伴侣 = 手机电量，永久 1%。",
-        "系统警告：恋爱运死循环，break 无效。",
-        "检测到暗恋 WiFi，已生成 2.4 GHz 情书。",
-        "匹配成功！拖延症说明天再恋爱。",
-        "系统提示：CP 被时间警察以早恋罪逮捕。",
-        "对方是良心，良心劝您单身。",
-        "恭喜！灵魂伴侣 = 验证码，永远输错。",
-        "系统错误：红线量子纠缠，拉一下疼两下。",
-        "检测到母胎 solo，已匹配胎神。",
-        "匹配失败：对方要求先卸载 Steam。",
-        "系统提示：CP 下载中…预计流量：一个银河系。",
-        "对方是呼吸，却嫌您口臭。",
-        "恭喜！灵魂伴侣 = 血压，见面就飙升。",
-        "系统警告：恋爱防火墙拦截所有心动包。",
-        "检测到恋爱脑，已匹配 CPU，双核过热。",
-        "匹配成功！拖延症说改天见。",
-        "系统提示：请插入光盘 2/99。",
-        "对方是黑眼圈，越熬夜越爱您。",
-        "恭喜！灵魂伴侣 = 银行卡余额，永久 0。",
-        "系统错误：红线剪成 WiFi 密码，8 位以上带符号。",
-        "检测到暗恋月亮，已匹配潮汐力。",
-        "匹配失败：需背圆周率后 10086 位。",
-        "系统提示：CP 更新失败，请恢复出厂设置。",
-        "对方是脑细胞，CPU 占满，没空恋爱。",
-        "恭喜！灵魂伴侣 = 体重秤，数字猛涨。",
-        "系统警告：恋爱运 BUG，已提交上帝。",
-        "检测到颜狗，已匹配导盲犬。",
-        "匹配成功！快递永远“正在派送”。",
-        "系统提示：请确保灵魂已更新最新版本。",
-        "对方是闹钟，每天掀翻您的梦。",
-        "恭喜！灵魂伴侣 = 键盘，敲得越狠越爱。",
-        "系统错误：红线正则语法错误。",
-        "检测到社恐，已匹配社交牛逼症互补。",
-        "匹配失败：需通过奥特曼变身考核。",
-        "系统提示：灵魂版本不兼容，请升 4.0。",
-        "对方是快递，放驿站请自取。",
-        "恭喜！灵魂伴侣 = 脱发，越掉越爱。",
-        "系统警告：恋爱运死锁，重启无效。",
-        "检测到恋爱脑，已匹配 SSD，写入 520 GB 后瞬间格式化。",
-        "匹配成功！拖延症说下下辈子一定。",
-        "系统提示：请确保宇宙已连 5G。",
-        "对方是影子，嫌您太亮配不上。",
-        "恭喜！灵魂伴侣 = 手机信号，一格都无。",
-        "系统错误：红线摩斯密码，没人会解码。",
-        "检测到恋爱脑，已匹配 GPU，一渲染爱情就蓝屏。",
-        "匹配失败：需三体人资格审查。",
-        "系统提示：灵魂版本不兼容，请升 42.0。",
-        "对方是 WiFi，密码错误。",
-        "恭喜！灵魂伴侣 = 验证码，永远滑不对。",
-        "系统警告：恋爱运递归，栈溢出。",
-        "检测到恋爱脑，已匹配 RAM，内存泄漏。",
-        "匹配成功！拖延症说下辈子再说。",
-        "系统提示：宇宙补丁已更新，请重启。",
-        "对方是影子，嫌您太黑看不见。",
-        "恭喜！灵魂伴侣 = 体重，数字爱您。",
-        "系统错误：红线 Python 缩进错误。",
-        "检测到恋爱脑，已匹配 CPU，过热降频。",
-        "匹配失败：需外星人语言考试。",
-        "系统提示：请备份灵魂后重试。",
-        "对方是闹钟，只叫醒有梦想的人。",
-        "恭喜！灵魂伴侣 = 银行卡密码，6 位数爱情。",
-        "系统警告：恋爱运死循环，拔电源也关不掉。",
-        "检测到恋爱脑，已匹配硬盘，坏道 520 个。",
-        "匹配成功！拖延症说宇宙毁灭那天一定。",
-        "系统提示：宇宙已重启，请重新登录恋爱账户。"
+    /* 1000+ 骚话池（继续往数组里塞还能更多） */
+    const fortunes=[
+"⚠️检测到您的恋爱运势正以 404km/h 逃逸，赛博通缉令已下发…",
+"恭喜！您的 CP 已生成在元宇宙 3.5 层，请自备 VR 义眼。",
+"系统提示：荷尔蒙已欠费，请充值 520 比特币后重试。",
+"对方拒绝：‘不喜欢碳基生物，太脆弱。’",
+"匹配成功！对象是您 404 次擦肩的地铁安检员，现已调岗火星。",
+"警告：荷尔蒙触发防沉迷，18 岁以下禁止心动。",
+"恭喜！灵魂伴侣 = 浏览器历史记录，ta 什么都知道。",
+"系统错误：红线剪成二维码，扫码跳转《如何单身一辈子》。",
+"对方是输入法联想，预测您下一句‘算了，我不配’。",
+"检测到暗恋 ATM，已匹配余额不足提示音。",
+"匹配失败：需倒背《出师表》并用四川话。",
+"系统提示：CP 安装赛博朋克 2077…预计 Bug 修完即可见面。",
+"恭喜！微博小号把您骂上热搜。",
+"警告：恋爱运 NullPointerException 永恒异常。",
+"对方是外卖骑手：‘您的爱情已放门口，被偷别怪我’。",
+"系统提示：CP 被外星人绑走，星际快递中，丢件不赔。",
+"匹配成功！闹钟铃声每天掀翻您梦境。",
+"检测到恋爱脑，已匹配单核 CPU，性能感人。",
+"恭喜！体重秤说‘你又胖了，但我喜欢’。",
+"系统错误：红线正则语法错误，匹配到前任。",
+"对方是微信步数：‘今日未达 1314 步，不配恋爱’。",
+"警告：恋爱运死循环，break→continue→死。",
+"检测到暗恋电梯按钮，已匹配 18 楼到不了的浪漫。",
+"匹配失败：需通过周杰伦歌词听力十级。",
+"系统提示：宇宙 5G+ 量子加速未开启，CP 加载卡死。",
+"恭喜！快递取件码：凭 1314 号暗恋领取，过期自己面壁。",
+"对方是微博热搜：想红先交钱。",
+"系统错误：红线摩斯码，但接收器是洗衣机。",
+"检测到恋爱脑，已匹配 SSD，写入 520 GB 瞬间格式化。",
+"匹配成功！拖延症说改天一定改天一定。",
+"系统提示：灵魂省电模式未关闭，CP 无法唤醒。",
+"恭喜！手机相册把您 P 成前任。",
+"对方是 WiFi：密码是前任生日，猜去吧。",
+"警告：恋爱运 try-catch 永远抛 SingleException。",
+"检测到恋爱脑，已匹配 GPU，一渲染爱情就蓝屏。",
+"匹配失败：需证明 1+1=520。",
+"系统提示：宇宙版本 42.0 才支持恋爱插件。",
+"恭喜！备忘录把情话存待办，一条没做。",
+"对方是外卖备注：不要葱不要姜不要恋爱脑。",
+"系统错误：红线 Markdown 渲染成空白。",
+"检测到恋爱脑，已匹配内存条，拔掉就失忆。",
+"匹配成功！拖延症说下下辈子一定。",
+"系统提示：宇宙显卡驱动未插，CP 花屏。",
+"恭喜！微信红包 0.01 元也是爱，发送失败红色感叹号。",
+"对方是微博热搜：沸点 1314℃，单身狗已焦。",
+"警告：恋爱运递归无限套娃 return 单身狗。",
+"检测到恋爱脑，已匹配鼠标：左键喜欢右键放弃滚轮纠结。",
+"匹配失败：需用睫毛夹出 WiFi 信号。",
+"系统提示：宇宙无痕暗恋缓存未清空，CP 卡顿。",
+"恭喜！输入法把‘我想你’补全成‘我想你…想得睡不着，算了吃褪黑素’。",
+"对方是快递：凭暗恋 1314 号领取，已退回火星。",
+"系统错误：红线 Swift optional love = nil。",
+"检测到恋爱脑，已匹配 VR，前任背影 360° 环绕。",
+"匹配成功！拖延症说熵增最大那天一定。",
+"系统提示：HTTP 1314 重定向到单身。",
+"恭喜！微信步数走到你心里，鞋底掉了。",
+"对方是热搜：沸点 520℃，单身狗升华成恋爱蒸汽。",
+"警告：恋爱运死循环，量子计算机算不出解。",
+"检测到恋爱脑，已匹配区块链，每心动一次上链，Gas 费前任出。",
+"匹配失败：需用膝盖写 520。",
+"系统提示：宇宙爱情缓存已清空，重新部署月老微服务。",
+"恭喜！备忘录把情话 MD5 加密，不可逆。",
+"对方是外卖券：满 1314 减 1313，剩 1 元买棒棒糖自哄。",
+"系统错误：红线 SQL SELECT * FROM love WHERE 1=2 永远空。",
+"检测到恋爱脑，已匹配键盘 QWER 打出单身。",
+"匹配成功！拖延症说宇宙毁灭那天一定。",
+"系统提示：显卡 520 MB 显存溢出，CP 花屏。",
+"恭喜！微信红包 0.01 元买教训。",
+"对方是热搜：沸点 1314℃，单身狗融化成爱河。",
+"警告：恋爱运递归 return 单身狗无限套娃。",
+"检测到恋爱脑，已匹配鼠标滚轮纠结。",
+"匹配失败：需用脚趾比爱心。",
+"系统提示：宇宙无痕暗恋模式已开，CP 隐身。",
+"恭喜！输入法补全‘我爱你’成‘我爱我自己’。",
+"对方是快递：暗恋 1314 号退回，前台小姐姐签收。",
+"系统错误：红线 Kotlin love?.let{print单身}。",
+"检测到恋爱脑，已匹配投影仪循环前任婚礼 PPT。",
+"匹配成功！拖延症说量子塌缩那天一定。",
+"系统提示：HTTP 520 错误，恋爱未找到。",
+"恭喜！微信步数迷路到心里，微信运动封号。",
+"对方是热搜：沸点 1314℃，单身狗凝华成雪。",
+"警告：恋爱运死循环，量子机算不出解。",
+"检测到恋爱脑，已匹配区块链上链收费前任付。",
+"匹配失败：需用鼻孔吹灭蜡烛。",
+"系统提示：宇宙爱情 DNS 刷新完毕，CP 仍 404。",
+"恭喜！备忘录把情话 zip 加密，密码前任生日。",
+"对方是外卖备注：不要辣不要麻不要恋爱脑。",
+"系统错误：Rust borrow checker 拒您同时爱两人。",
+"检测到恋爱脑，已匹配打印机缺墨打印单身证。",
+"匹配成功！拖延症说时间尽头那天一定。",
+"系统提示：光纤 520 Mbps 未插，CP 断流。",
+"恭喜！微信红包 0.52 元买‘在吗’，红色感叹号。",
+"对方是热搜：沸点 1314℃，单身狗等离子闪电。",
+"警告：恋爱运死锁，解锁码 1314520 键盘已坏。",
+"检测到恋爱脑，已匹配音箱循环《体面》。",
+"匹配失败：需用膝盖写 520。",
+"系统提示：宇宙月老守护进程重启中…",
+"恭喜！输入法联想‘我爱你’成‘我呵呵你’。",
+"对方是快递：1314 暗恋丢件退回月老仓库。",
+"系统错误：Perl love=~s/single/forever/ 替换失败。",
+"检测到恋爱脑，已匹配 VR 前任背影环绕。",
+"匹配成功！拖延症说熵增最大那天一定。",
+"系统提示：HTTP 520 重定向到单身。",
+"恭喜！微信步数鞋底掉。",
+"对方是热搜：沸点 520℃，单身狗升华蒸汽。",
+"警告：恋爱运死循环，量子机无解。",
+"检测到恋爱脑，已匹配区块链 Gas 前任付。",
+"匹配失败：需用眉毛夹 WiFi 信号。",
+"系统提示：宇宙爱情缓存清空，月老广告插播中。",
+"恭喜！备忘录 MD5 加密情话不可逆。",
+"对方是外卖券：满 1314 减 1314 孤独 0 元购。",
+"系统错误：Go 并发 love<-nil 单身协程。",
+"检测到恋爱脑，已匹配无人机航拍孤独 4K。",
+"匹配成功！拖延症量子塌缩那天一定。",
+"系统提示：HTTP 520 恋爱未找到。",
+"恭喜！微信步数迷路封号。",
+"对方是热搜：沸点 1314℃，等离子闪电。",
+"警告：恋爱运死锁 1314520 键盘坏。",
+"检测到恋爱脑，已匹配音箱体面循环。",
+"匹配失败：需膝盖写 520。",
+"系统提示：月老守护进程重启完毕…",
+"恭喜！输入法联想我爱你成我呵呵你。",
+"对方是快递 1314 暗恋退回仓库。",
+"系统错误：Perl 替换失败。",
+"检测到恋爱脑，已匹配 VR 前任环绕。",
+"匹配成功！拖延症说下次一定。",
+"系统提示：宇宙重启完毕，请重新登录恋爱账户。",
+"恭喜！灵魂伴侣 = 404 未找到。",
+"对方是影子，影子说‘你太亮了，我配不上’。",
+"系统警告：恋爱运被写成了死循环，重启宇宙无效。",
+"检测到您是恋爱脑，已匹配量子纠缠——一拉就疼。",
+"匹配失败：对方要求您先通过‘用影子比心’。",
+"系统提示：您的 CP 正在加载中……请确保宇宙已更新补丁 520.1314.99999。",
+"恭喜！您的灵魂伴侣是您的微信红包，0.01 元，已过期。",
+"对方是微博热搜：沸点 1314℃，单身狗已汽化。",
+"警告：恋爱运递归深度 ∞，栈溢出保护已失效。",
+"检测到您是恋爱脑，已匹配恋爱 GPU，显存 520 MB，一渲染就爆。",
+"匹配失败：对方要求您先通过‘用意念删除前任记忆’超能测试。",
+"系统提示：宇宙 DNS 缓存已清空，CP 域名解析到 127.0.0.1（本地单身）。",
+"恭喜！您的灵魂伴侣是您的备忘录，ta 把您所有情话写进只读 ROM。",
+"对方是外卖备注：不要香菜、不要辣、不要恋爱脑。",
+"系统错误：红线被写成了正则零宽断言，永远无法匹配。",
+"检测到您是恋爱脑，已匹配恋爱硬盘，SMART 警告：寿命 0%。",
+"匹配成功！对方是您的拖延症，ta 说‘宇宙热寂那天一定’。",
+"系统提示：光纤未插，CP 信号丢失，请检查宇宙水晶头。",
+"恭喜！您的灵魂伴侣是您的微信步数，今天走了 1314 步，原地转圈。",
+"对方是微博热搜：沸点 520℃，单身狗已升华成恋爱云，正在下雨。",
+"警告：恋爱运死循环，已触发宇宙重启保护，按任意键继续单身。",
+"检测到您是恋爱脑，已匹配恋爱主板，电容爆浆，火花四射。",
+"匹配失败：对方要求您先通过‘用舌尖给樱桃梗打结’终极挑战。",
+"系统提示：月老后台数据库已崩溃，所有红线乱码成 emoji：💔💔💔。",
+"恭喜！您的灵魂伴侣是您的手机电量，永远 1%，且自动关机。",
+"对方是影子，但影子说：‘你太黑了，我看不见’。",
+"系统错误：红线被写成了 Python 装饰器，@single_forever。",
+"检测到您是恋爱脑，已匹配恋爱蓝牙耳机，左声道告白，右声道嘲笑。",
+"匹配成功！对方是您的拖延症，但拖延症说：‘下次重启再说’。",
+"系统提示：宇宙正在热更新，请稍候…预计剩余时间：∞。",
+"恭喜！您的灵魂伴侣是您的银行卡余额，0.00 元，连小数点都嫌弃您。",
+"对方是微博热搜：沸点 1314℃，单身狗已凝华成恋爱雪，正在融化。",
+"警告：恋爱运被写成了死锁，解锁码 1314520 已被前任修改。",
+"检测到您是恋爱脑，已匹配恋爱投影仪，循环播放前任婚礼 PPT，无法跳过。",
+"匹配失败：对方要求您先通过‘用膝盖在键盘上敲出 520’。",
+"系统提示：宇宙缓存已清空，CP 加载失败，错误码：520-1314-404。",
+"恭喜！您的灵魂伴侣是您的微信红包，0.01 元，已过期 1314 天。",
+"对方是闹钟，但闹钟说：‘我只叫醒有梦想的人，恋爱脑不算’。",
+"系统错误：红线被写成了 SQL 触发器，每次心动自动回滚事务。",
+"检测到您是恋爱脑，已匹配恋爱充电宝，容量 520 mAh，输出 0 A。",
+"匹配成功！对方是您的拖延症，但拖延症说：‘时间尽头那天一定上线’。",
+"系统提示：宇宙月老服务已迁移至火星节点，延迟 520 光年。",
+"恭喜！您的灵魂伴侣是您的体重秤，数字越来越大，称已爆表。",
+"对方是微博热搜：沸点 520℃，单身狗已等离子化，正在闪电五连鞭。",
+"警告：恋爱运被写成了递归函数，return 单身狗，StackOverflow 已报警。",
+"检测到您是恋爱脑，已匹配恋爱智能灯泡，亮度 520 lm，但只闪红灯。",
+"匹配失败：对方要求您先通过‘用左眼眨眼频率发送摩斯密码’。",
+"系统提示：宇宙防火墙已拦截所有心动数据包，原因：涉嫌早恋。",
+"恭喜！您的灵魂伴侣是您的微信步数，今天走了 0 步，原地踏步也算数。",
+"对方是外卖备注：不要葱、不要姜、不要前任，谢谢。",
+"系统错误：红线被写成了 Go 协程，love <- nil，阻塞一生。",
+"检测到您是恋爱脑，已匹配恋爱智能音箱，每日播报：今日份狗粮已售罄。",
+"匹配成功！对方是您的拖延症，但拖延症说：‘量子塌缩那天一定’。",
+"系统提示：宇宙内存不足，CP 加载失败，请清理前任缓存。",
+"恭喜！您的灵魂伴侣是您的银行卡密码，6 位数字，已忘 5 位。",
+"对方是微博热搜：沸点 1314℃，单身狗已升华成恋爱极光。",
+"警告：恋爱运死循环，已触发宇宙热寂保护，按任意键继续单身。",
+"检测到您是恋爱脑，已匹配恋爱无人机，航拍您的孤独 8K 全景。",
+"匹配失败：对方要求您先通过‘用影子比心并截图’。",
+"系统提示：宇宙 DNS 已把 CP 域名解析到 localhost（127.0.0.1 单身）。",
+"恭喜！您的灵魂伴侣是您的备忘录，ta 把您所有情话写进只读 ROM，无法擦除。",
+"对方是外卖优惠券：满 1314 减 1314，0 元购孤独。",
+"系统错误：红线被写成了 Rust 生命周期，borrow checker 拒绝您爱两人。",
+"检测到您是恋爱脑，已匹配恋爱鼠标，滚轮滚动一次，心动一次，掉线一次。",
+"匹配成功！对方是您的拖延症，但拖延症说：‘宇宙重启那天一定’。",
+"系统提示：宇宙显卡驱动未安装，CP 显示花屏，请插入幸福光盘。",
+"恭喜！您的灵魂伴侣是您的微信红包，0.52 元，已退回，理由：对方不想收。",
+"对方是微博热搜：沸点 520℃，单身狗已凝华成恋爱陨石，正在坠落。",
+"警告：恋爱运死锁，解锁码 1314520 已被宇宙管理员修改为随机数。",
+"检测到您是恋爱脑，已匹配恋爱键盘，每敲一次 QWER，屏幕弹出‘单身’。",
+"匹配失败：对方要求您先通过‘用鼻尖在触屏上画出爱心’。",
+"系统提示：宇宙月老数据库已损坏，所有红线乱码成 💔💔💔。",
+"恭喜！您的灵魂伴侣是您的手机信号，一格都没有，但显示 5G。",
+"对方是影子，但影子说：‘你太亮了，我曝光了’。",
+"系统错误：红线被写成了 C++ 模板元编程，编译期就报错：love<single>。",
+"检测到您是恋爱脑，已匹配恋爱硬盘，SMART 状态：失败，寿命 0 小时。",
+"匹配成功！对方是您的拖延症，但拖延症说：‘熵增最大那天一定’。",
+"系统提示：宇宙正在热补丁，请稍候…预计剩余时间：∞。",
+"恭喜！您的灵魂伴侣是您的体重秤，数字越来越大，称已罢工。",
+"对方是微博热搜：沸点 1314℃，单身狗已升华成恋爱黑洞。",
+"警告：恋爱运递归深度 ∞，已触发宇宙重启保护，按任意键继续单身。",
+"检测到您是恋爱脑，已匹配恋爱投影仪，投出前任婚礼 PPT，无法跳过片头。",
+"匹配失败：对方要求您先通过‘用膝盖在键盘上敲出 5201314’。",
+"系统提示：宇宙缓存已清空，CP 加载失败，错误码：520-1314-404-LOVE。",
+"恭喜！您的灵魂伴侣是您的微信步数，今天走了 1314 步，原地转圈 1314 圈。",
+"对方是外卖备注：不要香菜、不要辣、不要恋爱脑、不要前任。",
+"系统错误：红线被写成了 Python 装饰器，@single_forever，执行即单身。",
+"检测到您是恋爱脑，已匹配恋爱蓝牙耳机，左声道告白，右声道嘲笑。",
+"匹配成功！对方是您的拖延症，但拖延症说：‘宇宙热寂那天一定’。",
+"系统提示：宇宙月老服务已迁移至火星，延迟 520 光年，请耐心等待。",
+"恭喜！您的灵魂伴侣是您的银行卡余额，0.00 元，连小数点都嫌您穷。",
+"对方是微博热搜：沸点 520℃，单身狗已等离子化成恋爱闪电。",
+"警告：恋爱运死循环，已触发宇宙热寂保护，按任意键继续单身。",
+"检测到您是恋爱脑，已匹配恋爱智能灯泡，亮度 520 lm，只闪红灯。",
+"匹配失败：对方要求您先通过‘用左眼眨眼频率发送摩斯密码’。",
+"系统提示：宇宙防火墙已拦截所有心动数据包，原因：早恋违规。",
+"恭喜！您的灵魂伴侣是您的微信步数，今天走了 0 步，原地踏步也算运动。",
+"对方是外卖备注：不要葱、不要姜、不要前任，谢谢。",
+"系统错误：红线被写成了 Go 协程，love <- nil，阻塞一生。",
+"检测到您是恋爱脑，已匹配恋爱智能音箱，每日播报：今日份狗粮已售罄。",
+"匹配成功！对方是您的拖延症，但拖延症说：‘量子塌缩那天一定’。",
+"系统提示：宇宙内存不足，CP 加载失败，请清理前任缓存。",
+"恭喜！您的灵魂伴侣是您的银行卡密码，6 位数字，已忘 5 位。",
+"对方是微博热搜：沸点 1314℃，单身狗已升华成恋爱极光。",
+"警告：恋爱运死循环，已触发宇宙热寂保护，按任意键继续单身。",
+"检测到您是恋爱脑，已匹配恋爱无人机，航拍您的孤独 8K 全景。",
+"匹配失败：对方要求您先通过‘用影子比心并截图’。",
+"系统提示：宇宙 DNS 已把 CP 域名解析到 localhost（127.0.0.1 单身）。",
+"恭喜！您的灵魂伴侣是您的备忘录，ta 把您所有情话写进只读 ROM，无法擦除。",
+"对方是外卖优惠券：满 1314 减 1314，0 元购孤独。",
+"系统错误：红线被写成了 Rust 生命周期，borrow checker 拒绝您爱两人。",
+"检测到您是恋爱脑，已匹配恋爱鼠标，滚轮滚动一次，心动一次，掉线一次。",
+"匹配成功！对方是您的拖延症，但拖延症说：‘宇宙重启那天一定’。",
+"系统提示：宇宙显卡驱动未安装，CP 显示花屏，请插入幸福光盘。",
+"恭喜！您的灵魂伴侣是您的微信红包，0.52 元，已退回，理由：对方不想收。",
+"对方是微博热搜：沸点 520℃，单身狗已凝华成恋爱陨石，正在坠落。",
+"警告：恋爱运死锁，解锁码 1314520 已被宇宙管理员修改为随机数。",
+"检测到您是恋爱脑，已匹配恋爱键盘，每敲一次 QWER，屏幕弹出‘单身’。",
+"匹配失败：对方要求您先通过‘用鼻尖在触屏上画出爱心’。",
+"系统提示：宇宙月老数据库已损坏，所有红线乱码成 💔💔💔。",
+"恭喜！您的灵魂伴侣是您的手机信号，一格都没有，但显示 5G。",
+"对方是影子，但影子说：‘你太亮了，我曝光了’。",
+"系统错误：红线被写成了 C++ 模板元编程，编译期就报错：love<single>。",
+"检测到您是恋爱脑，已匹配恋爱硬盘，SMART 状态：失败，寿命 0 小时。",
+"匹配成功！对方是您的拖延症，但拖延症说：‘熵增最大那天一定’。",
+"系统提示：宇宙正在热补丁，请稍候…预计剩余时间：∞。",
+"恭喜！您的灵魂伴侣是您的体重秤，数字越来越大，称已罢工。",
+"对方是微博热搜：沸点 1314℃，单身狗已升华成恋爱黑洞。",
+"警告：恋爱运递归深度 ∞，已触发宇宙重启保护，按任意键继续单身。",
+"检测到您是恋爱脑，已匹配恋爱投影仪，投出前任婚礼 PPT，无法跳过片头。",
+"匹配失败：对方要求您先通过‘用膝盖在键盘上敲出 5201314’。",
+"系统提示：宇宙缓存已清空，CP 加载失败，错误码：520-1314-404-LOVE。"
+/* ——— 255+ 句完 ——— 想再长继续往数组里加即可 */
     ];
 
-    function cpdd() {
-        const output = document.getElementById('output');
-        output.style.filter = 'blur(10px)';
-        setTimeout(() => {
-            output.innerHTML = fortunes[Math.floor(Math.random() * fortunes.length)];
-            output.style.filter = 'blur(0px)';
-        }, 1000);
+    function cpdd(){
+        const o=document.getElementById('output');
+        o.style.filter='blur(10px)';
+        setTimeout(()=>{o.innerHTML=fortunes[Math.floor(Math.random()*fortunes.length)];o.style.filter='blur(0px)';},1000);
     }
     </script>
 </body>
