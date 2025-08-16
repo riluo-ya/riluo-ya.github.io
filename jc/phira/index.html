@@ -68,14 +68,23 @@
             </div>
             <p class="text-gray-600 mb-4">点击下方视频即可观看完整教程</p>
             <div class="aspect-video w-full rounded-lg overflow-hidden">
-                <iframe src="//player.bilibili.com/player.html?isOutside=true&aid=115026488793678&bvid=BV1CtbzzBEwc&cid=31690523153&p=1" 
-                        scrolling="no" 
-                        border="0" 
-                        frameborder="no" 
-                        framespacing="0" 
-                        allowfullscreen="true"
-                        class="w-full h-full">
+                <iframe src="https://player.bilibili.com/player.html?isOutside=true&aid=115026488793678&bvid=BV1CtbzzBEwc&cid=31690523153&p=1">
                 </iframe>
+            </div>
+            <!-- 新增按钮区域 -->
+            <div class="mt-4 flex flex-col sm:flex-row gap-3">
+                <a href="bilibili://video/115026488793678" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="btn flex-1 bg-pink-500 hover:bg-pink-600 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-external-link-alt mr-2"></i>点击跳转到b站观看视频
+                </a>
+                <a href="https://player.bilibili.com/player.html?isOutside=true&aid=115026488793678&bvid=BV1CtbzzBEwc&cid=31690523153&p=1" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="btn flex-1 bg-sky-500 hover:bg-sky-600 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-play-circle mr-2"></i>在网页中观看视频
+                </a>
             </div>
         </div>
         
@@ -107,90 +116,4 @@
             <div class="space-y-3">
                 <a href="https://github.com/hanxinhao000/ZeroTermux" 
                    target="_blank" 
-                   rel="noopener noreferrer"
-                   class="link-item flex items-center p-3 rounded-lg border border-gray-200">
-                    <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 mr-3">
-                        <i class="fab fa-github"></i>
-                    </div>
-                    <span class="text-gray-700">Termux GitHub</span>
-                    <i class="fas fa-chevron-right ml-auto text-gray-400"></i>
-                </a>
-            </div>
-        </div>
-        
-        <!-- Termux命令板块 -->
-        <div class="card bg-white rounded-xl p-6 mb-8">
-            <div class="flex items-center mb-4">
-                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">
-                    <i class="fas fa-terminal"></i>
-                </div>
-                <h2 class="text-2xl font-semibold text-gray-800">Termux使用命令</h2>
-            </div>
-            <div class="relative">
-                <div class="bg-gray-100 p-4 rounded-lg font-mono text-gray-800 overflow-x-auto">
-                    curl -LO riluo-ya.github.io/sh/install.sh && bash install.sh
-                </div>
-                <button id="copyBtn" class="copy-btn absolute top-2 right-2 bg-gray-200 hover:bg-blue-500 text-gray-700 hover:text-white p-2 rounded-md">
-                    <i class="fas fa-copy"></i>
-                </button>
-                <div id="copySuccess" class="copy-success absolute top-12 right-2 bg-green-500 text-white text-sm py-1 px-2 rounded-md hidden">
-                    已复制!
-                </div>
-            </div>
-        </div>
-        
-        <!-- 内网穿透资源板块 -->
-        <div class="card bg-white rounded-xl p-6">
-            <div class="flex items-center mb-4">
-                <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 mr-3">
-                    <i class="fas fa-network-wired"></i>
-                </div>
-                <h2 class="text-2xl font-semibold text-gray-800">内网穿透资源</h2>
-            </div>
-            
-            <div class="space-y-3">
-                <a href="https://www.hpproxy.cn/" 
-                   target="_blank" 
-                   rel="noopener noreferrer"
-                   class="link-item flex items-center p-3 rounded-lg border border-gray-200">
-                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 mr-3">
-                        <i class="fas fa-globe"></i>
-                    </div>
-                    <span class="text-gray-700">内网穿透网站</span>
-                    <i class="fas fa-chevron-right ml-auto text-gray-400"></i>
-                </a>
-                
-                <a href="https://www.hpproxy.cn/#/home/download" 
-                   target="_blank" 
-                   rel="noopener noreferrer"
-                   class="link-item flex items-center p-3 rounded-lg border border-gray-200">
-                    <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-500 mr-3">
-                        <i class="fas fa-download"></i>
-                    </div>
-                    <span class="text-gray-700">内网穿透软件下载</span>
-                    <i class="fas fa-chevron-right ml-auto text-gray-400"></i>
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <footer class="mt-12 text-center text-gray-500 text-sm">
-        <p>By <a href="https://b23.tv/utkIZzK" class="text-blue-500 hover:underline">日落-ya</a></p>
-        <p class="mt-1">Phira多人联机教程配套文档</p>
-    </footer>
-
-    <script>
-        // 复制命令功能
-        document.getElementById('copyBtn').addEventListener('click', function() {
-            const command = 'curl -LO riluo-ya.github.io/sh/install.sh && bash install.sh';
-            navigator.clipboard.writeText(command).then(() => {
-                const copySuccess = document.getElementById('copySuccess');
-                copySuccess.classList.remove('hidden');
-                setTimeout(() => {
-                    copySuccess.classList.add('hidden');
-                }, 1500);
-            });
-        });
-    </script>
-</body>
-</html>
+              
