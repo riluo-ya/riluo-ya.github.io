@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>正在为您匹配中……请稍候……█▓▒░ 99% ░▒▓█</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            color: #0f0;
+            font-family: 'ZCOOL KuaiLe', monospace;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><text y="28" font-size="28">💔</text></svg>'), auto;
+        }
+        #matrix {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        #main {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            animation: glitch 0.5s infinite alternate;
+        }
+        h1 {
+            font-size: 5vw;
+            margin: 0;
+            text-shadow: 0 0 10px #0f0, 0 0 20px #0f0;
+        }
+        button {
+            background: transparent;
+            color: #0f0;
+            border: 2px solid #0f0;
+            padding: 1em 2em;
+            font-size: 2em;
+            cursor: pointer;
+            margin-top: 2em;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px #0f0;
+        }
+        button:hover {
+            background: #0f0;
+            color: #000;
+            transform: scale(1.1) rotate(5deg);
+        }
+        #output {
+            margin-top: 2em;
+            font-size: 1.5em;
+            min-height: 3em;
+            filter: blur(0px);
+            transition: filter 0.5s;
+        }
+        @keyframes glitch {
+            0% { transform: translate(-50%, -50%) skewX(0deg); }
+            20% { transform: translate(-50%, -50%) skewX(5deg); }
+            40% { transform: translate(-50%, -50%) skewX(-5deg); }
+            60% { transform: translate(-50%, -50%) skewX(3deg); }
+            80% { transform: translate(-50%, -50%) skewX(-3deg); }
+            100% { transform: translate(-50%, -50%) skewX(0deg); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrix"></canvas>
+    <div id="main">
+        <h1 id="title">CPDD 量子纠缠<br>赛博月老系统</h1>
+        <button onclick="cpdd()">开始匹配！</button>
+        <div id="output">点击下方按钮，启动您的姻缘奇点！</div>
+    </div>
+
+    <script>
+        // 故障文字动画
+        const title = document.getElementById('title');
+        const originalTitle = title.innerHTML;
+        const glitchChars = '▒▓░█▄▀▌▐';
+        setInterval(() => {
+            let glitched = '';
+            for (let char of originalTitle) {
+                if (Math.random() < 0.1 && char !== ' ') {
+                    glitched += glitchChars[Math.floor(Math.random() * glitchChars.length)];
+                } else {
+                    glitched += char;
+                }
+            }
+            title.innerHTML = glitched;
+            setTimeout(() => {
+                title.innerHTML = originalTitle;
+            }, 100);
+        }, 500);
+
+        // 矩阵雨背景
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const drops = [];
+        for (let i = 0; i < canvas.width / 10; i++) drops[i] = 1;
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0f0';
+            ctx.font = '10pt monospace';
+            drops.forEach((y, x) => {
+                const text = String.fromCharCode(0x30A0 + Math.random() * 96);
+                ctx.fillText(text, x * 10, y * 10);
+                if (y * 10 > canvas.height && Math.random() > 0.975) drops[x] = 0;
+                drops[x]++;
+            });
+        }
+        setInterval(drawMatrix, 33);
+
+        // CPDD 匹配逻辑（伪）
+        const fortunes = [
+"⚠️检测到您的恋爱运势正以 404km/h 的速度逃逸，正在为您申请赛博通缉令……",
+"恭喜！您的 CP 已生成，但对方仅存在于元宇宙 3.5 层，请自备 VR 义眼。",
+"系统提示：您的荷尔蒙已欠费，请充值 520 比特币后重试。",
+"对方拒绝了您，理由是：‘不喜欢碳基生物，太脆弱。’",
+"匹配成功！对方是一只薛定谔的猫，死活取决于您是否偷看。",
+"警告：您的情丝被加密成 NFT，如需解锁请用前任的眼泪铸造私钥。",
+"系统故障：月老掉线，已临时更换为 AI 月老——ChatGPT-月老版。",
+"恭喜！对方是您的影分身，但影分身先一步爱上了您的镜像。",
+"检测到您的灵魂有 404 处漏洞，正在打补丁……补丁失败，建议重启人生。",
+"对方正在加载……预计时间：从宇宙大爆炸到热寂。",
+"系统提示：您的 CP 被外星人绑去做研究了，请等待星际外交结果。",
+"匹配失败：您的理想型已被写进 SCP 基金会，等级：Keter。",
+"恭喜！对方是 2077 年的您，但 ta 警告您别炒股。",
+"系统警告：您的恋爱脑已感染勒索病毒，需支付 1314 枚狗粮解锁。",
+"对方是您的梦中情人，但梦醒了，ta 还在睡。",
+"检测到您在暗恋 Siri，已为您升级为 iLove 套餐。",
+"匹配成功！对方是您的输入法，它早就知道您想说‘我爱你’。",
+"系统提示：您的 CP 正在安装 Windows 99，请稍候……蓝屏了。",
+"对方是二次元纸片人，但 ta 嫌您不够立体。",
+"恭喜！您的灵魂伴侣是块 RAM，断电就失忆。",
+"系统错误：您的红线被猫玩成了毛线球，正在拆线中。",
+"检测到您的前世是只鸽子，已为您匹配另一只鸽子，一起咕咕咕。",
+"匹配失败：对方要求您先通过奥特曼资格审查。",
+"系统提示：您的 CP 正在加载中……进度 99.9999999999%，无限循环。",
+"对方是您的影子，但影子只爱黑暗。",
+"恭喜！您的灵魂伴侣是您的手机电量，永远 1%。",
+"系统警告：您的恋爱运被写成了死循环，Ctrl+C 无效。",
+"检测到您正在暗恋 WiFi，已为您生成 2.4GHz 的情书。",
+"匹配成功！对方是您的拖延症，永远明天再说。",
+"系统提示：您的 CP 被时间警察逮捕，罪名是‘早恋’。",
+"对方是您的良心，但良心建议单身。",
+"恭喜！您的灵魂伴侣是您的验证码，永远输不对。",
+"系统错误：您的红线被量子纠缠了，拉一下疼两下。",
+"检测到您是母胎 solo，已为您匹配胎神。",
+"匹配失败：对方要求您先卸载 Steam。",
+"系统提示：您的 CP 正在下载中……预计流量：一个银河系。",
+"对方是您的呼吸，但 ta 说您口臭。",
+"恭喜！您的灵魂伴侣是您的血压，一见面就飙升。",
+"系统警告：您的恋爱防火墙拦截了所有心动数据包。",
+"检测到您是恋爱脑，已为您匹配恋爱 CPU，双核过热。",
+"匹配成功！对方是您的拖延症，但拖延症说改天见面。",
+"系统提示：您的 CP 正在加载中……请插入光盘 2/99。",
+"对方是您的黑眼圈，越熬夜越爱你。",
+"恭喜！您的灵魂伴侣是您的银行卡余额，永远为零。",
+"系统错误：您的红线被剪成了 WiFi 密码，8 位以上带符号。",
+"检测到您暗恋月亮，已为您匹配潮汐力。",
+"匹配失败：对方要求您先背诵圆周率到小数点后 10086 位。",
+"系统提示：您的 CP 正在更新中……更新失败，请恢复出厂设置。",
+"对方是您的脑细胞，但脑细胞说 CPU 占满，没空恋爱。",
+"恭喜！您的灵魂伴侣是您的体重秤，数字越来越大。",
+"系统警告：您的恋爱运被写成了 BUG，提交给上帝了。",
+"检测到您是颜狗，已为您匹配导盲犬。",
+"匹配成功！对方是您的快递，永远在‘正在派送’。",
+"系统提示：您的 CP 正在加载中……请确保您的灵魂已更新到最新版本。",
+"对方是您的闹钟，每天叫你起床的是 ta 不是梦想。",
+"恭喜！您的灵魂伴侣是您的键盘，打字越多越爱你。",
+"系统错误：您的红线被写成了正则表达式，语法错误。",
+"检测到您是社恐，已为您匹配社交牛逼症互补。",
+"匹配失败：对方要求您先通过奥特曼变身考核。",
+"系统提示：您的 CP 正在加载中……灵魂版本不兼容，请升级至 4.0。",
+"对方是您的快递，但 ta 说‘您的爱情已放驿站，请自取’。",
+"恭喜！您的灵魂伴侣是您的脱发，越掉越爱你。",
+"系统警告：您的恋爱运被写成了死锁，重启无效。",
+"检测到您是恋爱脑，已为您匹配恋爱 SSD，读取速度 520MB/s。",
+"匹配成功！对方是您的拖延症，但拖延症说‘下次一定’。",
+"系统提示：您的 CP 正在加载中……请确保您的宇宙已连接 WiFi。",
+"对方是您的影子，但影子说‘你太亮了，我配不上’。",
+"恭喜！您的灵魂伴侣是您的手机信号，一格都没有。",
+"系统错误：您的红线被写成了摩斯密码，但没人会解码。",
+"检测到您是恋爱脑，已为您匹配恋爱 GPU，显卡爆炸。",
+"匹配失败：对方要求您先通过三体人资格审查。",
+"系统提示：您的 CP 正在加载中……灵魂版本不兼容，请升级至 42.0。",
+"对方是您的 WiFi，但 ta 说‘密码错误’。",
+"恭喜！您的灵魂伴侣是您的验证码，永远滑不对。",
+"系统警告：您的恋爱运被写成了递归函数，栈溢出。",
+"检测到您是恋爱脑，已为您匹配恋爱 RAM，内存泄漏。",
+"匹配成功！对方是您的拖延症，但拖延症说‘明天再说’。",
+"系统提示：您的 CP 正在加载中……请确保您的宇宙已更新补丁。",
+"对方是您的影子，但影子说‘你太黑了，我看不见’。",
+"恭喜！您的灵魂伴侣是您的体重，数字越来越爱你。",
+"系统错误：您的红线被写成了 Python，缩进错误。",
+"检测到您是恋爱脑，已为您匹配恋爱 CPU，过热降频。",
+"匹配失败：对方要求您先通过外星人语言考试。",
+"系统提示：您的 CP 正在加载中……请确保您的灵魂已备份。",
+"对方是您的闹钟，但闹钟说‘我不叫恋爱脑起床’。",
+"恭喜！您的灵魂伴侣是您的银行卡密码，6 位数的爱情。",
+"系统警告：您的恋爱运被写成了死循环，break 无效。",
+"检测到您是恋爱脑，已为您匹配恋爱硬盘，坏道 520 个。",
+"匹配成功！对方是您的拖延症，但拖延症说‘改天一定’。",
+"系统提示：您的 CP 正在加载中……请确保您的宇宙已重启。",
+"对方是您的影子，但影子说‘你太透明了，我看不见’。",
+"恭喜！您的灵魂伴侣是您的手机电量，1% 的爱情。",
+"系统错误：您的红线被写成了 Java，NullPointerException。",
+"检测到您是恋爱脑，已为您匹配恋爱主板，短路火花。",
+"匹配失败：对方要求您先通过克苏鲁低语测试。",
+"系统提示：您的 CP 正在加载中……请确保您的灵魂已格式化。",
+"对方是您的 WiFi，但 ta 说‘信号太弱，不配’。",
+"恭喜！您的灵魂伴侣是您的验证码，语音验证也听不清。",
+"系统警告：您的恋爱运被写成了死锁，解锁码 1314。",
+"检测到您是恋爱脑，已为您匹配恋爱电源，电压不稳。",
+"匹配成功！对方是您的拖延症，但拖延症说‘下辈子一定’。",
+"系统提示：您的 CP 正在加载中……请确保您的宇宙已清缓存。",
+"对方是您的影子，但影子说‘你太刺眼了，我配不上’。",
+"恭喜！您的灵魂伴侣是您的体重秤，数字越来越爱你。",
+"系统错误：您的红线被写成了 C++，段错误 (core dumped)。",
+"检测到您是恋爱脑，已为您匹配恋爱散热器，风扇狂转。",
+"匹配失败：对方要求您先通过 SCP-682 生存测试。",
+"系统提示：您的 CP 正在加载中……请确保您的灵魂已更新补丁。",
+"对方是您的闹钟，但闹钟说‘我只叫醒有梦想的人’。",
+"恭喜！您的灵魂伴侣是您的银行卡余额，0.00 元的浪漫。",
+"系统警告：您的恋爱运被写成了死循环，Ctrl+Z 无效。",
+"检测到您是恋爱脑，已为您匹配恋爱电池，电量不足自动关机。",
+"匹配成功！对方是您的拖延症，但拖延症说‘下次重启再说’。",
+"系统提示：您的 CP 正在加载中……请确保您的宇宙已连接 5G。",
+"对方是您的影子，但影子说‘你太黑了，我融化了’。",
+"恭喜！您的灵魂伴侣是您的手机信号，无服务的爱情。",
+"系统错误：您的红线被写成了 JavaScript，Promise 永远 pending。",
+"检测到您是恋爱脑，已为您匹配恋爱机箱，RGB 灯效告白。",
+"匹配失败：对方要求您先通过 V 字仇杀队面具识别。",
+"系统提示：您的 CP 正在加载中……请确保您的灵魂已开启飞行模式。",
+"对方是您的 WiFi，但 ta 说‘密码已改，前任的生日’。",
+"恭喜！您的灵魂伴侣是您的验证码，点 9 张红绿灯也过不去。",
+"系统警告：您的恋爱运被写成了死循环，强制关机无效。",
+"检测到您是恋爱脑，已为您匹配恋爱音箱，循环播放《体面》。",
+"匹配成功！对方是您的拖延症，但拖延症说‘明天开始爱你’。",
+"系统提示：您的 CP 正在加载中……请确保您的宇宙已更新显卡驱动。",
+"对方是您的影子，但影子说‘你太亮了，我曝光了’。",
+"恭喜！您的灵魂伴侣是您的体重，数字越来越浪漫。",
+"系统错误：您的红线被写成了 HTML，标签未闭合。",
+"检测到您是恋爱脑，已为您匹配恋爱耳机，左声道告白右声道沉默。",
+"匹配失败：对方要求您先通过图灵测试反向验证。",
+"系统提示：您的 CP 正在加载中……请确保您的灵魂已清空回收站。",
+"对方是您的闹钟，但闹钟说‘我不叫恋爱脑起床’。",
+"恭喜！您的灵魂伴侣是您的银行卡密码，连续输错三次锁定。",
+"系统警告：您的恋爱运被写成了死循环，拔电源也关不掉。",
+"检测到您是恋爱脑，已为您匹配恋爱投影仪，投出前任的 PPT。",
+"匹配成功！对方是您的拖延症，但拖延症说‘下辈子一定’。",
+"系统提示：您的 CP 正在加载中……请确保您的宇宙已更新 BIOS。"
+];
+        function cpdd() {
+            const output = document.getElementById('output');
+            output.style.filter = 'blur(10px)';
+            setTimeout(() => {
+                output.innerHTML = fortunes[Math.floor(Math.random() * fortunes.length)];
+                output.style.filter = 'blur(0px)';
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
