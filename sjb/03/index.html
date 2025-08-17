@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Hooooooooo！！！究极疯狂病院 3.0 💀🔥</title>
+    <style>
+        /* 继承之前全部样式 */
+        body{
+            background:#000;
+            overflow:hidden;
+            margin:0;
+            font-family:"Comic Sans MS";
+        }
+
+        /* Hooooooooo 巨型文字 */
+        .hooo{
+            position:fixed;
+            top:50%; left:50%;
+            transform:translate(-50%,-50%);
+            font-size:15vmin;
+            color:#fff;
+            text-shadow:
+                0 0 10px #f0f,
+                0 0 20px #f0f,
+                0 0 40px #f0f,
+                0 0 80px #f0f;
+            animation: pulse .4s infinite alternate, spin 2s linear infinite;
+            z-index:10000;
+            pointer-events:none;
+            white-space:nowrap;
+        }
+        @keyframes pulse{
+            from{transform:translate(-50%,-50%) scale(.8);}
+            to{transform:translate(-50%,-50%) scale(1.2);}
+        }
+
+        /* 声波圈 */
+        .wave{
+            position:fixed;
+            top:50%; left:50%;
+            width:0; height:0;
+            border:5px solid #fff;
+            border-radius:50%;
+            transform:translate(-50%,-50%);
+            animation: grow 1s ease-out forwards;
+            z-index:9999;
+            pointer-events:none;
+        }
+        @keyframes grow{
+            to{
+                width:200vmin;
+                height:200vmin;
+                opacity:0;
+            }
+        }
+
+        /* 星星闪烁背景 */
+        .star{
+            position:absolute;
+            width:2px; height:2px;
+            background:#fff;
+            border-radius:50%;
+            animation: twinkle .5s infinite alternate;
+        }
+        @keyframes twinkle{
+            to{opacity:0; transform:scale(3);}
+        }
+
+        /* 彩色Hoooo 雨 */
+        .hooo-drop{
+            position:fixed;
+            font-size:2rem;
+            color:#0ff;
+            animation: drop 3s linear forwards;
+            pointer-events:none;
+            text-shadow:0 0 10px currentColor;
+        }
+        @keyframes drop{
+            to{
+                transform:translateY(110vh) rotate(720deg);
+                opacity:0;
+            }
+        }
+
+        /* 按钮升级 */
+        .spinning-button{
+            /* 原来按钮样式基础上增加 */
+            background:linear-gradient(45deg,
+                #ff0000 20%, #ff8000 40%, #ffff00 60%,
+                #00ff00 80%, #0080ff 100%);
+            animation: spin .3s linear infinite,
+                       gradientShift .7s infinite,
+                       hoooGlow .5s infinite alternate;
+        }
+        @keyframes hoooGlow{
+            from{box-shadow:0 0 30px #fff, 0 0 60px #fff;}
+            to{box-shadow:0 0 50px #0ff, 0 0 100px #0ff;}
+        }
+    </style>
+</head>
+<body>
+    <!-- 之前所有元素保留 -->
+    <!-- …… -->
+
+    <!-- 新增 Hooooooooo 大字 -->
+    <div class="hooo" id="hooo">Hooooooooo！！</div>
+
+    <script>
+    /* ---------- 全局变量 ---------- */
+    let hoooCount = 0;
+
+    /* ---------- 疯狂音效 ---------- */
+    const hoooAudio = ()=>{
+        const ctx = new(window.AudioContext||webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type='sawtooth';
+        osc.frequency.setValueAtTime(150, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime+0.5);
+        gain.gain.setValueAtTime(1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime+0.5);
+    };
+
+    /* ---------- 发射Hooooo ---------- */
+    const fireHooo = ()=>{
+        hoooCount++;
+        const hooo = document.getElementById('hooo');
+        hooo.textContent = 'H'+'o'.repeat(5+hoooCount%10)+'！！';
+        hooo.style.color = ['#f0f','#0ff','#ff0','#f00','#0f0','#00f'][hoooCount%6];
+        hoooAudio();
+
+        // 声波圈
+        const wave = document.createElement('div');
+        wave.className='wave';
+        document.body.appendChild(wave);
+        setTimeout(()=>wave.remove(),1000);
+
+        // 星星爆炸
+        for(let i=0;i<100;i++){
+            const star = document.createElement('div');
+            star.className='star';
+            star.style.left = Math.random()*100+'vw';
+            star.style.top  = Math.random()*100+'vh';
+            star.style.animationDelay = Math.random()+'s';
+            document.body.appendChild(star);
+            setTimeout(()=>star.remove(),1000);
+        }
+
+        // 彩色Hoooo雨
+        for(let i=0;i<20;i++){
+            setTimeout(()=>{
+                const drop = document.createElement('div');
+                drop.className='hooo-drop';
+                drop.textContent='Hoooo';
+                drop.style.left = Math.random()*100+'vw';
+                drop.style.color = ['#f0f','#0ff','#ff0'][Math.floor(Math.random()*3)];
+                document.body.appendChild(drop);
+                setTimeout(()=>drop.remove(),3000);
+            },i*50);
+        }
+    };
+
+    /* ---------- 每隔几秒自动Hoooo ---------- */
+    setInterval(fireHooo, 4000);
+
+    /* ---------- 点击按钮也Hoooo ---------- */
+    document.querySelector('.spinning-button').addEventListener('click', fireHooo);
+
+    /* ---------- 键盘任意键触发Hoooo ---------- */
+    document.addEventListener('keydown', fireHooo);
+
+    /* ---------- 鼠标狂点连发Hoooo ---------- */
+    let hoooInterval;
+    document.addEventListener('mousedown', ()=>{
+        hoooInterval = setInterval(fireHooo, 100);
+    });
+    document.addEventListener('mouseup', ()=>clearInterval(hoooInterval));
+    </script>
+</body>
+</html>
