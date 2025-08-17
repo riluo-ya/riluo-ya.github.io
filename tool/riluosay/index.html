@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>日落曰 · 文字加密</title>
+<style>
+:root{
+    --bg-light:rgba(255,255,255,.35);
+    --bg-dark:rgba(30,30,30,.35);
+    --accent:#f76b51;
+    --text-light:#2b2b2b;
+    --text-dark:#e4e4e4;
+    --border-light:rgba(0,0,0,.15);
+    --border-dark:rgba(255,255,255,.18);
+    --glass-blur:18px;
+}
+@media (prefers-color-scheme:dark){
+    :root{
+        --bg-front:var(--bg-dark);
+        --text:var(--text-dark);
+        --border:var(--border-dark);
+    }
+}
+@media (prefers-color-scheme:light){
+    :root{
+        --bg-front:var(--bg-light);
+        --text:var(--text-light);
+        --border:var(--border-light);
+    }
+}
+body{
+    margin:0;
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+    background:url('data:image/svg+xml,\
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">\
+        <defs><radialGradient id="g" cx="50%" cy="50%" r="70%">\
+        <stop offset="0%" stop-color="%23f76b51" stop-opacity=".35"/>\
+        <stop offset="100%" stop-color="%23ffffff" stop-opacity=".25"/>\
+        </radialGradient></defs>\
+        <rect width="100%" height="100%" fill="url(%23g)"/></svg>');
+    background-size:cover;
+}
+.card{
+    width:90%;
+    max-width:480px;
+    padding:40px;
+    border-radius:28px;
+    background:var(--bg-front);
+    border:1px solid var(--border);
+    backdrop-filter:blur(var(--glass-blur));
+    -webkit-backdrop-filter:blur(var(--glass-blur));
+    box-shadow:0 8px 32px rgba(0,0,0,.12);
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+h1{
+    margin:0;
+    font-size:32px;
+    font-weight:700;
+    color:var(--accent);
+    text-align:center;
+}
+.subtitle{
+    font-size:14px;
+    color:var(--text);
+    opacity:.7;
+    text-align:center;
+    margin-top:-12px;
+}
+textarea{
+    width:100%;
+    min-height:120px;
+    padding:16px;
+    font-size:16px;
+    border:1px solid var(--border);
+    border-radius:16px;
+    resize:vertical;
+    background:rgba(255,255,255,.25);
+    color:var(--text);
+    box-sizing:border-box;
+    transition:border .25s;
+}
+textarea:focus{
+    outline:none;
+    border-color:var(--accent);
+}
+.buttons{
+    display:flex;
+    gap:12px;
+}
+button{
+    flex:1;
+    padding:14px 0;
+    font-size:16px;
+    border:none;
+    border-radius:16px;
+    cursor:pointer;
+    transition:.25s;
+}
+.primary{
+    background:var(--accent);
+    color:#fff;
+}
+.primary:hover{filter:brightness(1.1);}
+.secondary{
+    background:rgba(255,255,255,.25);
+    color:var(--accent);
+    border:1px solid var(--accent);
+}
+.secondary:hover{background:var(--accent);color:#fff;}
+.result{
+    padding:16px;
+    border-radius:16px;
+    background:rgba(255,255,255,.25);
+    border:1px solid var(--border);
+    font-size:15px;
+    line-height:1.5;
+    word-break:break-all;
+    max-height:200px;
+    overflow:auto;
+    color:var(--text);
+}
+.copy-btn-large{
+    margin-top:12px;
+    padding:12px 0;
+    width:100%;
+    font-size:17px;
+    font-weight:600;
+    border:none;
+    border-radius:16px;
+    background:var(--accent);
+    color:#fff;
+    cursor:pointer;
+    transition:.25s;
+}
+.copy-btn-large:hover{filter:brightness(1.1);}
+.copy-btn-large.copied{background:#4caf50;}
+</style>
+</head>
+<body>
+<div class="card">
+    <h1>日落曰</h1>
+    <p class="subtitle">把文字藏进日落里</p>
+
+    <textarea id="input" placeholder="请输入要加密或解密的内容…"></textarea>
+
+    <div class="buttons">
+        <button class="primary" onclick="encode()">加密</button>
+        <button class="secondary" onclick="decode()">解密</button>
+    </div>
+
+    <div id="resultBox" style="display:none">
+        <div class="result" id="resultText"></div>
+        <button class="copy-btn-large" id="copyBtn" onclick="copyResult()">复制结果</button>
+    </div>
+</div>
+
+<script>
+const dict = ['日落','晚霞','日暮','夕阳'];
+const header = '日落曰:';
+
+function encode(){
+    const txt = document.getElementById('input').value;
+    if(!txt){alert('请输入内容');return;}
+    let bits = [...new TextEncoder().encode(txt)]
+               .map(b=>b.toString(2).padStart(8,'0')).join('');
+    let out = header;
+    for(let i=0;i<bits.length;i+=2){
+        const idx = parseInt(bits.substr(i,2).padEnd(2,'0'),2);
+        out += dict[idx];
+    }
+    show(out);
+}
+
+function decode(){
+    const txt = document.getElementById('input').value.trim();
+    if(!txt.startsWith(header)){alert('格式错误');return;}
+    const body = txt.slice(header.length);
+    const rev = {'日落':0,'晚霞':1,'日暮':2,'夕阳':3};
+    let bits = '';
+    for(let i=0;i<body.length;i+=2){
+        const key = body.substr(i,2);
+        if(!(key in rev)){alert('非法字符');return;}
+        bits += rev[key].toString(2).padStart(2,'0');
+    }
+    const bytes = [];
+    for(let i=0;i+8<=bits.length;i+=8){
+        bytes.push(parseInt(bits.substr(i,8),2));
+    }
+    try{
+        const plain = new TextDecoder().decode(new Uint8Array(bytes));
+        show(plain);
+    }catch(e){alert('解密失败');}
+}
+
+function show(str){
+    document.getElementById('resultText').textContent = str;
+    document.getElementById('resultBox').style.display = 'block';
+    document.getElementById('copyBtn').classList.remove('copied');
+    document.getElementById('copyBtn').textContent = '复制结果';
+}
+
+/* 可靠复制：优先新 API，失败降级 execCommand */
+function copyResult(){
+    const text = document.getElementById('resultText').textContent;
+    const btn = document.getElementById('copyBtn');
+
+    const fallback = () => {
+        /* 创建隐藏 textarea 选中文本后复制 */
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+    };
+
+    if(navigator.clipboard){
+        navigator.clipboard.writeText(text)
+            .then(()=>done())
+            .catch(()=>{ fallback(); done(); });
+    }else{ fallback(); done(); }
+
+    function done(){
+        btn.textContent = '已复制 ✓';
+        btn.classList.add('copied');
+        setTimeout(()=>{
+            btn.textContent = '复制结果';
+            btn.classList.remove('copied');
+        },800);
+    }
+}
+</script>
+</body>
+</html>
