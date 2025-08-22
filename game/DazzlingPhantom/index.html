@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>炫彩幻影！！！</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        
+        #gameCanvas {
+            display: block;
+            background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%);
+        }
+        
+        #ui {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 20px;
+            z-index: 10;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        #ui div {
+            margin: 5px 0;
+        }
+        
+        .life {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #ff8787);
+            border-radius: 50%;
+            margin: 0 2px;
+            box-shadow: 0 0 15px #ff6b6b;
+            animation: heartBeat 1.5s infinite;
+        }
+        
+        .life.lost {
+            background: #333;
+            box-shadow: none;
+            animation: none;
+        }
+        
+        @keyframes heartBeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        #gameOver {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            text-align: center;
+            display: none;
+            z-index: 20;
+            background: rgba(0,0,0,0.95);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 2px solid #ff6b6b;
+            box-shadow: 0 0 30px rgba(255, 107, 107, 0.5);
+        }
+        
+        #restartBtn {
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #ff8787);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        #restartBtn:hover {
+            transform: scale(1.05);
+        }
+        
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 30;
+        }
+        
+        #startBtn {
+            margin-top: 30px;
+            padding: 20px 40px;
+            font-size: 24px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #ff6b6b);
+            background-size: 200% 200%;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.3s;
+            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
+            animation: rainbow 2s linear infinite;
+        }
+        
+        /* 商店系统 */
+        #shopButton, #coinButton {
+            position: fixed;
+            bottom: 20px;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s;
+            z-index: 15;
+            animation: shopPulse 2s infinite;
+        }
+        
+        #shopButton {
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #000;
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.5);
+        }
+        
+        #coinButton {
+            right: 20px;
+            background: linear-gradient(45deg, #00ff88, #00cc6a);
+            color: #000;
+            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.5);
+        }
+        
+        @keyframes shopPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        #shopButton:hover, #coinButton:hover {
+            transform: scale(1.1);
+        }
+        
+        #shopModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            z-index: 40;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .shop-container {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 90%;
+            max-height: 80%;
+            overflow-y: auto;
+            border: 2px solid #ffd700;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
+        }
+        
+        .shop-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 15px;
+            background: #333;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #000;
+        }
+        
+        .shop-section {
+            display: none;
+        }
+        
+        .shop-section.active {
+            display: block;
+        }
+        
+        .item-grid, .skin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .shop-item, .skin-item {
+            background: linear-gradient(135deg, #2a2a3e, #1a1a2e);
+            border: 2px solid #444;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .shop-item:hover:not(.disabled), .skin-item:hover {
+            transform: scale(1.05);
+            border-color: #ffd700;
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.3);
+        }
+        
+        .shop-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .item-icon, .skin-item {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        
+        .item-name, .skin-name {
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .item-price {
+            color: #00ff88;
+            font-weight: bold;
+        }
+        
+        .cooldown-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            border-radius: 15px;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .close-shop {
+            display: block;
+            margin: 20px auto 0;
+            padding: 10px 30px;
+            background: linear-gradient(45deg, #ff6b6b, #ff8787);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        #invincibleEffect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
+            display: none;
+            z-index: 5;
+            animation: invinciblePulse 1s infinite;
+        }
+        
+        @keyframes invinciblePulse {
+            0% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+            100% { opacity: 0.3; }
+        }
+        
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        #speedWarning {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff6b6b;
+            font-size: 48px;
+            font-weight: bold;
+            display: none;
+            z-index: 15;
+            text-shadow: 0 0 30px #ff6b6b;
+            animation: warningPulse 0.5s infinite;
+        }
+        
+        @keyframes warningPulse {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.7; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        
+        #enemyCount {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            color: #ff6b6b;
+            font-size: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        #coinDisplay {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            color: #00ff88;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        #collisionEffect {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ff88;
+            font-size: 36px;
+            font-weight: bold;
+            display: none;
+            z-index: 16;
+            text-shadow: 0 0 20px #00ff88;
+            animation: collisionReward 1s ease-out;
+        }
+        
+        @keyframes collisionReward {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+        
+        #regenEffect {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ff00;
+            font-size: 30px;
+            font-weight: bold;
+            display: none;
+            z-index: 16;
+            text-shadow: 0 0 15px #00ff00;
+            animation: regenPulse 1.5s ease-out;
+        }
+        
+        @keyframes regenPulse {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+        
+        #notification {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 0, 0, 0.9);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.5);
+            animation: notificationPop 0.5s ease-out;
+        }
+        
+        @keyframes notificationPop {
+            0% { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+            100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        
+        #saveIndicator {
+            position: fixed;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 255, 0, 0.8);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 15px;
+            font-size: 12px;
+            display: none;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="invincibleEffect"></div>
+    <div id="collisionEffect">+3 💰</div>
+    <div id="regenEffect">❤️ +1</div>
+    <div id="notification">金币不足！</div>
+    <div id="saveIndicator">游戏已保存</div>
+    
+    <div id="ui">
+        <div>得分: <span id="score">0</span></div>
+        <div>速度: <span id="speed">1.0</span>x</div>
+        <div>生命: <span id="lives">
+            <span class="life"></span>
+            <span class="life"></span>
+            <span class="life"></span>
+        </span></div>
+        <div id="enemyCount">敌人: <span id="enemyNumber">0</span></div>
+        <div id="coinDisplay">💰 <span id="coinAmount">0</span></div>
+    </div>
+    
+    <div id="speedWarning">极速模式！</div>
+    
+    <button id="shopButton">🎨 商店</button>
+    <button id="coinButton">💎 金币: <span id="coinBtnAmount">0</span></button>
+    
+    <div id="shopModal">
+        <div class="shop-container">
+            <h2 class="shop-title">🛒 炫彩商店</h2>
+            
+            <div class="shop-tabs">
+                <button class="tab-button active" onclick="switchTab('skins')">皮肤（免费）</button>
+                <button class="tab-button" onclick="switchTab('items')">道具</button>
+            </div>
+            
+            <div class="shop-section active" id="skinsSection">
+                <div class="skin-grid" id="skinGrid"></div>
+            </div>
+            
+            <div class="shop-section" id="itemsSection">
+                <div class="item-grid">
+                    <div class="shop-item" onclick="buyItem('life')">
+                        <div class="item-icon">❤️</div>
+                        <div class="item-name">额外生命</div>
+                        <div class="item-price">20 金币</div>
+                        <div class="cooldown-overlay">冷却中</div>
+                    </div>
+                    
+                    <div class="shop-item" onclick="buyItem('invincible')">
+                        <div class="item-icon">🛡️</div>
+                        <div class="item-name">3秒无敌</div>
+                        <div class="item-price">30 金币</div>
+                        <div class="cooldown-overlay">冷却中</div>
+                    </div>
+                    
+                    <div class="shop-item" onclick="buyItem('slow')">
+                        <div class="item-icon">🐌</div>
+                        <div class="item-name">减速器</div>
+                        <div class="item-price">15 金币</div>
+                        <div class="cooldown-overlay">冷却中</div>
+                    </div>
+                    
+                    <div class="shop-item" onclick="buyItem('clear')">
+                        <div class="item-icon">💥</div>
+                        <div class="item-name">清除敌人</div>
+                        <div class="item-price">25 金币</div>
+                        <div class="cooldown-overlay">冷却中</div>
+                    </div>
+                    
+                    <div class="shop-item" onclick="buyItem('magnet')">
+                        <div class="item-icon">🧲</div>
+                        <div class="item-name">金币磁铁</div>
+                        <div class="item-price">35 金币</div>
+                        <div class="cooldown-overlay">冷却中</div>
+                    </div>
+                    
+                    <div class="shop-item" onclick="buyItem('freeze')">
+                        <div class="item-icon">❄️</div>
+                        <div class="item-name">冻结敌人</div>
+                        <div class="item-price">40 金币</div>
+                        <div class="cooldown-overlay">冷却中</div>
+                    </div>
+                    
+                    <div class="shop-item" onclick="buyItem('multishot')">
+                        <div class="item-icon">⚡</div>
+                        <div class="item-name">多重射击</div>
+                        <div class="item-price">50 金币</div>
+                        <div class="cooldown-overlay">冷却中</div>
+                    </div>
+                    
+                    <div class="shop-item" onclick="buyItem('shield')">
+                        <div class="item-icon">🔰</div>
+                        <div class="item-name">护盾保护</div>
+                        <div class="item-price">45 金币</div>
+                        <div class="cooldown-overlay">冷却中</div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="close-shop" onclick="closeShop()">关闭</button>
+            <button class="close-shop" onclick="saveGame()" style="background: linear-gradient(45deg, #00ff88, #00cc6a);">💾 保存游戏</button>
+            <button class="close-shop" onclick="loadGame()" style="background: linear-gradient(45deg, #00bfff, #0080ff);">📁 读取存档</button>
+        </div>
+    </div>
+    
+    <div id="gameOver">
+        <h2 style="font-size: 36px; margin-bottom: 20px;">炫彩挑战结束</h2>
+        <p style="font-size: 24px; margin: 10px 0;">最终得分: <span id="finalScore">0</span></p>
+        <p style="font-size: 18px; margin: 10px 0;">最高速度: <span id="maxSpeed">1.0</span>x</p>
+        <p style="font-size: 18px; margin: 10px 0;">击败敌人: <span id="enemiesDefeated">0</span></p>
+        <p style="font-size: 18px; margin: 10px 0;">获得金币: <span id="totalCoins">0</span></p>
+        <button id="restartBtn">再来一局</button>
+    </div>
+    
+    <div id="startScreen">
+        <h1 style="font-size: 48px; margin-bottom: 20px; background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #ff6b6b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: rainbow 2s linear infinite;">
+            炫彩幻影商店版
+        </h1>
+        <p style="font-size: 20px; margin: 10px 0; opacity: 0.8;">存档系统 + 购买冷却 + 金币不足提示</p>
+        <p style="font-size: 16px; margin: 5px 0; opacity: 0.6;">支持本地存档，购买有0.5秒CD</p>
+        <button id="startBtn">开始炫彩之旅</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const speedEl = document.getElementById('speed');
+        const livesEl = document.getElementById('lives');
+        const enemyCountEl = document.getElementById('enemyNumber');
+        const coinAmountEl = document.getElementById('coinAmount');
+        const coinBtnAmountEl = document.getElementById('coinBtnAmount');
+        const gameOverEl = document.getElementById('gameOver');
+        const finalScoreEl = document.getElementById('finalScore');
+        const maxSpeedEl = document.getElementById('maxSpeed');
+        const enemiesDefeatedEl = document.getElementById('enemiesDefeated');
+        const totalCoinsEl = document.getElementById('totalCoins');
+        const restartBtn = document.getElementById('restartBtn');
+        const startScreen = document.getElementById('startScreen');
+        const startBtn = document.getElementById('startBtn');
+        const speedWarning = document.getElementById('speedWarning');
+        const shopButton = document.getElementById('shopButton');
+        const coinButton = document.getElementById('coinButton');
+        const shopModal = document.getElementById('shopModal');
+        const skinGrid = document.getElementById('skinGrid');
+        const invincibleEffect = document.getElementById('invincibleEffect');
+        const collisionEffect = document.getElementById('collisionEffect');
+        const regenEffect = document.getElementById('regenEffect');
+        const notification = document.getElementById('notification');
+        const saveIndicator = document.getElementById('saveIndicator');
+
+        let purchaseCooldown = false;
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        // 皮肤全部免费
+        const skins = [
+            { name: '彩虹', style: 'rainbow', color: 'rainbow', price: 0 },
+            { name: '黄金', style: 'gold', color: '#ffd700', price: 0 },
+            { name: '白银', style: 'silver', color: '#c0c0c0', price: 0 },
+            { name: '玫瑰金', style: 'rosegold', color: '#e8b4b8', price: 0 },
+            { name: '翡翠', style: 'emerald', color: '#50c878', price: 0 },
+            { name: '蓝宝石', style: 'sapphire', color: '#0f52ba', price: 0 },
+            { name: '紫水晶', style: 'amethyst', color: '#9966cc', price: 0 },
+            { name: '霓虹粉', style: 'neonpink', color: '#ff1493', price: 0 },
+            { name: '电光蓝', style: 'electricblue', color: '#00bfff', price: 0 },
+            { name: '火焰红', style: 'firered', color: '#ff4500', price: 0 }
+        ];
+
+        let currentSkin = skins[0];
+        let gameRunning = false;
+
+        let player = {
+            x: 0,
+            y: 0,
+            radius: 25,
+            speed: 5,
+            color: 0,
+            trail: []
+        };
+
+        let bullet = {
+            x: 0,
+            y: 0,
+            radius: 15,
+            vx: 3,
+            vy: 3,
+            speedMultiplier: 1.0,
+            maxSpeed: 2.5,
+            color: '#ff6b6b',
+            trail: []
+        };
+
+        let enemies = [];
+        let particles = [];
+        let score = 0;
+        let lives = 3;
+        let maxSpeed = 1.0;
+        let warningShown = false;
+        let enemiesDefeated = 0;
+        
+        // 计时器系统
+        let coins = 0;
+        let gameStartTime = 0;
+        let enemySpawnTimer = 0;
+        let healthRegenTimer = 0;
+
+        // 存档系统
+        function saveGame() {
+            const gameData = {
+                coins: coins,
+                maxScore: localStorage.getItem('maxScore') || 0,
+                totalCoins: localStorage.getItem('totalCoins') || 0,
+                currentSkin: currentSkin.name,
+                unlockedSkins: JSON.parse(localStorage.getItem('unlockedSkins')) || ['彩虹']
+            };
+            
+            localStorage.setItem('gameData', JSON.stringify(gameData));
+            showSaveIndicator();
+        }
+
+        function loadGame() {
+            const savedData = localStorage.getItem('gameData');
+            if (savedData) {
+                const gameData = JSON.parse(savedData);
+                coins = gameData.coins || 0;
+                updateCoinDisplay();
+                
+                // 恢复皮肤
+                const savedSkin = skins.find(skin => skin.name === gameData.currentSkin);
+                if (savedSkin) {
+                    currentSkin = savedSkin;
+                }
+                
+                showSaveIndicator("游戏已读取");
+            } else {
+                coins = 0;
+                showSaveIndicator("无存档");
+            }
+        }
+
+        function showSaveIndicator(text = "游戏已保存") {
+            saveIndicator.textContent = text;
+            saveIndicator.style.display = 'block';
+            setTimeout(() => {
+                saveIndicator.style.display = 'none';
+            }, 2000);
+        }
+
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.style.display = 'block';
+            notification.style.background = message.includes('不足') ? 'rgba(255, 0, 0, 0.9)' : 'rgba(0, 255, 0, 0.9)';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 2000);
+        }
+
+        function initShop() {
+            skinGrid.innerHTML = '';
+            const unlockedSkins = JSON.parse(localStorage.getItem('unlockedSkins')) || ['彩虹'];
+            
+            skins.forEach((skin, index) => {
+                const skinItem = document.createElement('div');
+                skinItem.className = 'skin-item';
+                skinItem.style.background = skin.style === 'rainbow' ? 
+                    'conic-gradient(from 0deg, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080, #ff0000)' : 
+                    `radial-gradient(circle, ${skin.color}, ${skin.color}88)`;
+                
+                skinItem.innerHTML = `
+                    <div class="skin-name">${skin.name}</div>
+                    <div style="font-size: 12px; color: ${unlockedSkins.includes(skin.name) ? '#00ff88' : '#ffd700'};">
+                        ${unlockedSkins.includes(skin.name) ? '已拥有' : `${skin.price} 金币`}
+                    </div>
+                `;
+                
+                if (skin === currentSkin) {
+                    skinItem.classList.add('active');
+                }
+                
+                if (unlockedSkins.includes(skin.name)) {
+                    skinItem.addEventListener('click', () => {
+                        currentSkin = skin;
+                        document.querySelectorAll('.skin-item').forEach(item => item.classList.remove('active'));
+                        skinItem.classList.add('active');
+                        saveGame();
+                    });
+                } else if (coins >= skin.price) {
+                    skinItem.addEventListener('click', () => {
+                        if (purchaseCooldown) return;
+                        purchaseCooldown = true;
+                        
+                        coins -= skin.price;
+                        unlockedSkins.push(skin.name);
+                        localStorage.setItem('unlockedSkins', JSON.stringify(unlockedSkins));
+                        updateCoinDisplay();
+                        showNotification(`${skin.name} 已解锁！`);
+                        saveGame();
+                        initShop();
+                        
+                        setTimeout(() => { purchaseCooldown = false; }, 500);
+                    });
+                }
+                
+                skinGrid.appendChild(skinItem);
+            });
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.shop-section').forEach(section => section.classList.remove('active'));
+            
+            if (tab === 'skins') {
+                document.querySelector('.tab-button').classList.add('active');
+                document.getElementById('skinsSection').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab-button')[1].classList.add('active');
+                document.getElementById('itemsSection').classList.add('active');
+            }
+        }
+
+        function openShop() {
+            if (!gameRunning) return;
+            shopModal.style.display = 'flex';
+            initShop();
+        }
+
+        function closeShop() {
+            shopModal.style.display = 'none';
+            saveGame();
+        }
+
+        function buyItem(itemType) {
+            if (purchaseCooldown) return;
+            
+            const prices = {
+                life: 20,
+                invincible: 30,
+                slow: 15,
+                clear: 25,
+                magnet: 35,
+                freeze: 40,
+                multishot: 50,
+                shield: 45
+            };
+
+            if (coins >= prices[itemType]) {
+                purchaseCooldown = true;
+                
+                coins -= prices[itemType];
+                updateCoinDisplay();
+                
+                switch(itemType) {
+                    case 'life':
+                        lives++;
+                        updateLivesDisplay();
+                        break;
+                    case 'invincible':
+                        invincible = true;
+                        invincibleEndTime = Date.now() + 3000;
+                        invincibleEffect.style.display = 'block';
+                        setTimeout(() => {
+                            invincible = false;
+                            invincibleEffect.style.display = 'none';
+                        }, 3000);
+                        break;
+                    case 'slow':
+                        bullet.speedMultiplier = Math.max(1, bullet.speedMultiplier * 0.7);
+                        break;
+                    case 'clear':
+                        enemies.forEach(enemy => {
+                            createParticles(enemy.x, enemy.y, enemy.color, 20);
+                        });
+                        enemiesDefeated += enemies.length;
+                        enemies = [];
+                        enemyCountEl.textContent = '0';
+                        break;
+                }
+                
+                showNotification("购买成功！");
+                saveGame();
+                
+                // 显示冷却
+                const item = document.querySelector(`.shop-item[onclick="buyItem('${itemType}')"]`);
+                const overlay = item?.querySelector('.cooldown-overlay');
+                if (overlay) {
+                    overlay.style.display = 'flex';
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                        purchaseCooldown = false;
+                    }, 500);
+                }
+            } else {
+                showNotification("金币不足！");
+            }
+        }
+
+        function updateCoinDisplay() {
+            coinAmountEl.textContent = coins;
+            coinBtnAmountEl.textContent = coins;
+        }
+
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.style.display = 'block';
+            notification.style.background = message.includes('不足') ? 'rgba(255, 0, 0, 0.9)' : 'rgba(0, 255, 0, 0.9)';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 2000);
+        }
+
+        function showSaveIndicator(text = "游戏已保存") {
+            saveIndicator.textContent = text;
+            saveIndicator.style.display = 'block';
+            setTimeout(() => {
+                saveIndicator.style.display = 'none';
+            }, 2000);
+        }
+
+        function loadGame() {
+            const savedData = localStorage.getItem('gameData');
+            if (savedData) {
+                const gameData = JSON.parse(savedData);
+                coins = gameData.coins || 0;
+                updateCoinDisplay();
+                
+                // 恢复皮肤
+                const savedSkin = skins.find(skin => skin.name === gameData.currentSkin);
+                if (savedSkin) {
+                    currentSkin = savedSkin;
+                }
+                
+                showSaveIndicator("游戏已读取");
+            } else {
+                showSaveIndicator("无存档");
+            }
+        }
+
+        function getPlayerColor(time = 0) {
+            if (currentSkin.style === 'rainbow') {
+                return `hsl(${time}, 100%, 50%)`;
+            }
+            return currentSkin.color;
+        }
+
+        let touchX = null;
+        let touchY = null;
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            touchX = touch.clientX;
+            touchY = touch.clientY;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (gameRunning) {
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - touchX;
+                const deltaY = touch.clientY - touchY;
+                
+                player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x + deltaX));
+                player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y + deltaY));
+                
+                touchX = touch.clientX;
+                touchY = touch.clientY;
+            }
+        });
+
+        function createParticles(x, y, color, count = 20) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 20,
+                    vy: (Math.random() - 0.5) * 20,
+                    radius: Math.random() * 8 + 3,
+                    color: color,
+                    life: 40,
+                    spark: true
+                });
+            }
+        }
+
+        function resetBullet() {
+            bullet.x = Math.random() * (canvas.width - 100) + 50;
+            bullet.y = 50;
+            bullet.vx = (Math.random() - 0.5) * 6;
+            bullet.vy = Math.abs(bullet.vx) + 2;
+            bullet.speedMultiplier = 1.0;
+            bullet.trail = [];
+            
+            const hue = Math.random() * 360;
+            bullet.color = `hsl(${hue}, 100%, 50%)`;
+        }
+
+        function createEnemy() {
+            const enemy = {
+                x: Math.random() * (canvas.width - 100) + 50,
+                y: Math.random() * (canvas.height - 200) + 100,
+                radius: 12,
+                vx: (Math.random() - 0.5) * 4,
+                vy: (Math.random() - 0.5) * 4,
+                speedMultiplier: 1.0,
+                maxSpeed: 2.5,
+                color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                trail: [],
+                id: Date.now() + Math.random()
+            };
+            enemies.push(enemy);
+            enemyCountEl.textContent = enemies.length;
+        }
+
+        function update() {
+            if (!gameRunning) return;
+
+            const currentTime = Date.now();
+            
+            // 更新货币（每2秒获得1金币）
+            if (gameStartTime > 0) {
+                const elapsedSeconds = Math.floor((currentTime - gameStartTime) / 1000);
+                const newCoins = Math.floor(elapsedSeconds / 2) - coins;
+                if (newCoins > 0) {
+                    coins += newCoins;
+                    updateCoinDisplay();
+                }
+            }
+
+            // 每5秒生成一个敌人
+            if (currentTime - enemySpawnTimer >= 5000) {
+                createEnemy();
+                enemySpawnTimer = currentTime;
+            }
+
+            // 每30秒回复1生命（满血不回复）
+            if (currentTime - healthRegenTimer >= 30000 && lives < 3) {
+                lives++;
+                updateLivesDisplay();
+                healthRegenTimer = currentTime;
+                showSaveIndicator("❤️ 生命+1");
+            }
+
+            // 自动保存
+            if (currentTime % 10000 < 50) {
+                saveGame();
+            }
+
+            player.color = (player.color + 5) % 360;
+
+            player.trail.push({ x: player.x, y: player.y, color: player.color });
+            if (player.trail.length > 12) player.trail.shift();
+
+            // 更新子弹（限制2.5倍速）
+            bullet.x += bullet.vx * bullet.speedMultiplier;
+            bullet.y += bullet.vy * bullet.speedMultiplier;
+
+            bullet.trail.push({ x: bullet.x, y: bullet.y, color: bullet.color });
+            if (bullet.trail.length > 20) bullet.trail.shift();
+
+            let bounced = false;
+            if (bullet.x <= bullet.radius || bullet.x >= canvas.width - bullet.radius) {
+                bullet.vx = -bullet.vx;
+                bullet.speedMultiplier += 0.1;
+                bullet.speedMultiplier = Math.min(bullet.speedMultiplier, bullet.maxSpeed);
+                bounced = true;
+            }
+            
+            if (bullet.y <= bullet.radius || bullet.y >= canvas.height - bullet.radius) {
+                bullet.vy = -bullet.vy;
+                bullet.speedMultiplier += 0.1;
+                bullet.speedMultiplier = Math.min(bullet.speedMultiplier, bullet.maxSpeed);
+                bounced = true;
+            }
+
+            if (bounced) createParticles(bullet.x, bullet.y, bullet.color, 15);
+
+            if (bullet.speedMultiplier >= 2.0 && !warningShown) {
+                speedWarning.style.display = 'block';
+                setTimeout(() => speedWarning.style.display = 'none', 1000);
+                warningShown = true;
+            } else if (bullet.speedMultiplier < 2.0) warningShown = false;
+
+            score = Math.floor(bullet.speedMultiplier * 100) + enemiesDefeated * 50;
+            scoreEl.textContent = score;
+            speedEl.textContent = bullet.speedMultiplier.toFixed(1);
+            maxSpeed = Math.max(maxSpeed, bullet.speedMultiplier);
+
+            // 更新所有敌人
+            const toRemove = new Set();
+            
+            // 检测敌人之间的碰撞
+            for (let i = 0; i < enemies.length; i++) {
+                for (let j = i + 1; j < enemies.length; j++) {
+                    if (i === j) continue;
+                    
+                    const enemy1 = enemies[i];
+                    const enemy2 = enemies[j];
+                    
+                    const dx = enemy1.x - enemy2.x;
+                    const dy = enemy1.y - enemy2.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < enemy1.radius + enemy2.radius) {
+                        // 敌人互撞，奖励金币
+                        coins += 3;
+                        updateCoinDisplay();
+                        
+                        // 显示奖励效果
+                        showSaveIndicator("+3 💰");
+                        
+                        // 创建爆炸粒子效果
+                        createParticles(enemy1.x, enemy1.y, enemy1.color, 25);
+                        createParticles(enemy2.x, enemy2.y, enemy2.color, 25);
+                        
+                        // 标记要移除的敌人
+                        toRemove.add(i);
+                        toRemove.add(j);
+                    }
+                }
+            }
+            
+            // 移除碰撞的敌人
+            const removedIndices = Array.from(toRemove).sort((a, b) => b - a);
+            removedIndices.forEach(index => {
+                enemies.splice(index, 1);
+            });
+            
+            if (removedIndices.length > 0) {
+                enemyCountEl.textContent = enemies.length;
+            }
+
+            // 更新剩余敌人
+            enemies.forEach((enemy, enemyIndex) => {
+                enemy.x += enemy.vx * enemy.speedMultiplier;
+                enemy.y += enemy.vy * enemy.speedMultiplier;
+
+                let enemyBounced = false;
+
+                // 敌人边界反弹且加速（最高2.5倍速）
+                if (enemy.x <= enemy.radius || enemy.x >= canvas.width - enemy.radius) {
+                    enemy.vx = -enemy.vx;
+                    enemy.speedMultiplier = Math.min(enemy.speedMultiplier + 0.1, enemy.maxSpeed);
+                    enemyBounced = true;
+                }
+                
+                if (enemy.y <= enemy.radius || enemy.y >= canvas.height - enemy.radius) {
+                    enemy.vy = -enemy.vy;
+                    enemy.speedMultiplier = Math.min(enemy.speedMultiplier + 0.1, enemy.maxSpeed);
+                    enemyBounced = true;
+                }
+
+                if (enemyBounced) {
+                    createParticles(enemy.x, enemy.y, enemy.color, 8);
+                }
+
+                enemy.trail.push({ x: enemy.x, y: enemy.y, color: enemy.color });
+                if (enemy.trail.length > 10) enemy.trail.shift();
+
+                // 检测玩家与敌人碰撞
+                const dx = enemy.x - player.x;
+                const dy = enemy.y - player.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < player.radius + enemy.radius) {
+                    createParticles(enemy.x, enemy.y, enemy.color, 20);
+                    enemies.splice(enemyIndex, 1);
+                    enemyCountEl.textContent = enemies.length;
+                    
+                    createParticles(player.x, player.y, getPlayerColor(player.color), 30);
+                    
+                    lives--;
+                    updateLivesDisplay();
+                    
+                    if (lives <= 0) {
+                        gameOver();
+                    }
+                }
+
+                // 检测子弹与敌人碰撞
+                const bulletDx = enemy.x - bullet.x;
+                const bulletDy = enemy.y - bullet.y;
+                const bulletDistance = Math.sqrt(bulletDx * bulletDx + bulletDy * bulletDy);
+                
+                if (bulletDistance < bullet.radius + enemy.radius) {
+                    createParticles(enemy.x, enemy.y, enemy.color, 25);
+                    createParticles(bullet.x, bullet.y, bullet.color, 25);
+                    
+                    enemies.splice(enemyIndex, 1);
+                    enemyCountEl.textContent = enemies.length;
+                    enemiesDefeated++;
+                    
+                    resetBullet();
+                    score += 100;
+                    scoreEl.textContent = score;
+                }
+            });
+
+            // 检测玩家与主子弹碰撞
+            const dx = bullet.x - player.x;
+            const dy = bullet.y - player.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < player.radius + bullet.radius) {
+                createParticles(bullet.x, bullet.y, bullet.color, 30);
+                createParticles(player.x, player.y, getPlayerColor(player.color), 30);
+                
+                lives--;
+                updateLivesDisplay();
+                
+                if (lives <= 0) {
+                    gameOver();
+                } else {
+                    resetBullet();
+                }
+            }
+
+            particles.forEach((particle, index) => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.life--;
+                particle.radius *= 0.96;
+                if (particle.life <= 0) particles.splice(index, 1);
+            });
+        }
+
+        function updateLivesDisplay() {
+            const lifeElements = livesEl.querySelectorAll('.life');
+            lifeElements.forEach((life, index) => {
+                life.classList.toggle('lost', index >= lives);
+            });
+        }
+
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            player.trail.forEach((point, index) => {
+                const alpha = index / player.trail.length * 0.7;
+                let size = player.radius * (index / player.trail.length);
+                
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+                ctx.fillStyle = getPlayerColor(point.color).replace('50%)', `${alpha * 50}%)`);
+                ctx.fill();
+            });
+
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            
+            let gradient;
+            if (currentSkin.style === 'rainbow') {
+                gradient = ctx.createRadialGradient(player.x, player.y, 0, player.x, player.y, player.radius);
+                gradient.addColorStop(0, getPlayerColor(player.color));
+                gradient.addColorStop(1, getPlayerColor((player.color + 30) % 360));
+            } else {
+                gradient = ctx.createRadialGradient(player.x, player.y, 0, player.x, player.y, player.radius);
+                gradient.addColorStop(0, currentSkin.color);
+                gradient.addColorStop(1, currentSkin.color + '88');
+            }
+            
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            ctx.shadowBlur = 30;
+            ctx.shadowColor = currentSkin.style === 'rainbow' ? getPlayerColor(player.color) : currentSkin.color;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            ctx.beginPath();
+            ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+            const bulletGradient = ctx.createRadialGradient(bullet.x, bullet.y, 0, bullet.x, bullet.y, bullet.radius);
+            bulletGradient.addColorStop(0, bullet.color);
+            bulletGradient.addColorStop(1, bullet.color.replace('50%)', '30%)'));
+            ctx.fillStyle = bulletGradient;
+            ctx.fill();
+            
+            ctx.shadowBlur = 40;
+            ctx.shadowColor = bullet.color;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            enemies.forEach(enemy => {
+                enemy.trail.forEach((point, index) => {
+                    const alpha = index / enemy.trail.length * 0.5;
+                    const size = enemy.radius * (index / enemy.trail.length);
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+                    ctx.fillStyle = point.color.replace('50%)', `${alpha * 50}%)`);
+                    ctx.fill();
+                });
+
+                ctx.beginPath();
+                ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+                const enemyGradient = ctx.createRadialGradient(enemy.x, enemy.y, 0, enemy.x, enemy.y, enemy.radius);
+                enemyGradient.addColorStop(0, enemy.color);
+                enemyGradient.addColorStop(1, enemy.color.replace('50%)', '20%)'));
+                ctx.fillStyle = enemyGradient;
+                ctx.fill();
+                
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = enemy.color;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+
+            particles.forEach(particle => {
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                ctx.fillStyle = particle.color;
+                ctx.globalAlpha = particle.life / 40;
+                
+                if (particle.spark) {
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = particle.color;
+                }
+                
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                ctx.shadowBlur = 0;
+            });
+
+            if (bullet.speedMultiplier > 10) {
+                ctx.strokeStyle = bullet.color;
+                ctx.globalAlpha = 0.3;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(bullet.x - bullet.vx * 10, bullet.y - bullet.vy * 10);
+                ctx.lineTo(bullet.x, bullet.y);
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            finalScoreEl.textContent = score;
+            maxSpeedEl.textContent = maxSpeed.toFixed(1);
+            enemiesDefeatedEl.textContent = enemiesDefeated;
+            totalCoinsEl.textContent = coins;
+            gameOverEl.style.display = 'block';
+            shopButton.style.display = 'none';
+            coinButton.style.display = 'none';
+            
+            // 更新最高分数
+            const maxScore = parseInt(localStorage.getItem('maxScore') || 0);
+            if (score > maxScore) {
+                localStorage.setItem('maxScore', score);
+            }
+            
+            saveGame();
+        }
+
+        function startGame() {
+            startScreen.style.display = 'none';
+            shopButton.style.display = 'block';
+            coinButton.style.display = 'block';
+            particles = [];
+            score = 0;
+            lives = 3;
+            maxSpeed = 1.0;
+            warningShown = false;
+            enemiesDefeated = 0;
+            enemySpawnTimer = Date.now();
+            healthRegenTimer = Date.now();
+            gameStartTime = Date.now();
+            purchaseCooldown = false;
+            
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+            player.trail = [];
+            player.color = 0;
+            
+            resetBullet();
+            
+            scoreEl.textContent = score;
+            speedEl.textContent = '1.0';
+            enemyCountEl.textContent = '0';
+            gameOverEl.style.display = 'none';
+            gameRunning = true;
+            
+            updateLivesDisplay();
+            updateCoinDisplay();
+            loadGame();
+        }
+
+        shopButton.addEventListener('click', openShop);
+        coinButton.addEventListener('click', openShop);
+        shopModal.addEventListener('click', (e) => {
+            if (e.target === shopModal) closeShop();
+        });
+
+        function restart() {
+            gameOverEl.style.display = 'none';
+            startScreen.style.display = 'flex';
+            shopButton.style.display = 'none';
+            coinButton.style.display = 'none';
+        }
+
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', restart);
+
+        // 初始化
+        loadGame();
+        gameLoop();
+    </script>
+</body>
+</html>
