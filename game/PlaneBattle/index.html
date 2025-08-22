@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"/>
+<title>飞机大战·烧鸡料理版</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#000}
+#gameCanvas{display:block;margin:auto;background:#111;touch-action:none}
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<script>
+/* ================= 常量 ================= */
+const W=640,H=960,PLAYER_WH=50;
+const BRANCH=[
+  /* 0 激光 */[{n:1,sp:0,w:8,h:16,c:'#ffeb3b',shape:'laser',dmg:1},{n:1,sp:0,w:9,h:18,c:'#ffeb3b',shape:'laser',dmg:1},{n:1,sp:0,w:10,h:20,c:'#ffeb3b',shape:'laser',dmg:2},{n:1,sp:0,w:11,h:22,c:'#ffeb3b',shape:'laser',dmg:2},{n:1,sp:0,w:12,h:24,c:'#ffeb3b',shape:'laser',dmg:3}],
+  /* 1 散射 */[{n:3,sp:8,w:7,h:14,c:'#00bcd4',shape:'laser',dmg:1},{n:4,sp:8,w:8,h:15,c:'#00bcd4',shape:'laser',dmg:1},{n:5,sp:8,w:9,h:16,c:'#00bcd4',shape:'laser',dmg:1},{n:6,sp:8,w:10,h:17,c:'#00bcd4',shape:'laser',dmg:2},{n:7,sp:8,w:11,h:18,c:'#00bcd4',shape:'laser',dmg:2}],
+  /* 2 追踪 */[{n:1,sp:0,w:10,h:20,c:'#e91e63',shape:'missile',dmg:1},{n:2,sp:0,w:11,h:21,c:'#e91e63',shape:'missile',dmg:1},{n:2,sp:0,w:12,h:22,c:'#e91e63',shape:'missile',dmg:2},{n:3,sp:0,w:13,h:23,c:'#e91e63',shape:'missile',dmg:2},{n:3,sp:0,w:14,h:24,c:'#e91e63',shape:'missile',dmg:3}],
+  /* 3 穿透 */[{n:1,sp:0,w:8,h:40,c:'#00ff9d',shape:'pierce',dmg:2},{n:1,sp:0,w:9,h:45,c:'#00ff9d',shape:'pierce',dmg:2},{n:1,sp:0,w:10,h:50,c:'#00ff9d',shape:'pierce',dmg:3},{n:1,sp:0,w:11,h:55,c:'#00ff9d',shape:'pierce',dmg:3},{n:1,sp:0,w:12,h:60,c:'#00ff9d',shape:'pierce',dmg:4}],
+  /* 4 分裂炸弹 */[{n:1,sp:0,w:12,h:18,c:'#ff5722',shape:'bomb',dmg:1},{n:1,sp:0,w:13,h:19,c:'#ff5722',shape:'bomb',dmg:1},{n:1,sp:0,w:14,h:20,c:'#ff5722',shape:'bomb',dmg:2},{n:1,sp:0,w:15,h:21,c:'#ff5722',shape:'bomb',dmg:2},{n:1,sp:0,w:16,h:22,c:'#ff5722',shape:'bomb',dmg:3}],
+  /* 5 环形脉冲 */[{n:12,sp:360/12,w:6,h:10,c:'#9c27b0',shape:'ring',dmg:1},{n:14,sp:360/14,w:6,h:11,c:'#9c27b0',shape:'ring',dmg:1},{n:16,sp:360/16,w:6,h:12,c:'#9c27b0',shape:'ring',dmg:1},{n:18,sp:360/18,w:7,h:13,c:'#9c27b0',shape:'ring',dmg:2},{n:20,sp:360/20,w:8,h:14,c:'#9c27b0',shape:'ring',dmg:2}]
+];
+const BOSS_CFG={width:140,height:90,speed:2,color:'#8e44ad',baseHp:20,fireCd:40};
+const enemyCfg=s=>({hp:1+Math.floor(s/300),speed:Math.min(4.5,1.5+s/600),size:40+Math.floor(s/400),drift:25});
+const maxEnemies=s=>Math.min(6+Math.floor(s/120),8);
+const bossHp=s=>BOSS_CFG.baseHp+Math.floor(s/40);
+const bossFireCd=s=>Math.max(12,BOSS_CFG.fireCd-Math.floor(s/150));
+const rand=(a,b)=>Math.random()*(b-a)+a;
+const hit=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+const cvs=document.getElementById('gameCanvas');
+const ctx=cvs.getContext('2d');
+cvs.width=W;cvs.height=H;
+function resize(){
+  const s=Math.min(innerWidth/W,innerHeight/H);
+  cvs.style.width=W*s+'px';cvs.style.height=H*s+'px';
+}
+window.addEventListener('resize',resize);resize();
+
+/* ================= 状态 ================= */
+let ST={
+  frame:0,score:0,gameOver:false,
+  player:{x:W/2-PLAYER_WH/2,y:H-PLAYER_WH-120,hp:5,maxHp:5,invincible:0},
+  weaponLevel:0,powerBuff:0,bulletAngle:0,bulletDir:1,currentBranch:0,
+  wingmen:[],playerBullets:[],piercingBeams:[],ringWaves:[],
+  enemies:[],enemyBullets:[],boss:null,drops:[],
+  stars:[...Array(150)].map(()=>({x:rand(0,W),y:rand(0,H),r:rand(0.5,2),v:rand(0.2,0.7),o:rand(0.2,0.8)})),
+  bossRound:0,transitionEnergy:0,showingWaveText:0,
+  chipRapidUntil:0,bossTimer:0,energyFullEffect:0,specialWingmen:[],
+  lastError:null,
+  foodDm:[]
+};
+
+/* ================= 料理弹幕 ================= */
+const FOOD_NAMES={
+  normal:['椒盐脆皮烧鸡翅','柠檬手撕烧鸡丝','麻辣鸡丁小炒'],
+  elite:['编剧灵魂辣子鸡','刀痕入味红烧鸡块','麻辣鸡丁小炒'],
+  boss:['流萤同款奶油焗全鸡','姬子秘制炭烤编剧','玩家眼泪鸡汤锅']
+};
+function pushFoodDm(type,x,y){
+  const arr=FOOD_NAMES[type];
+  const text=arr[Math.floor(Math.random()*arr.length)];
+  /* 持续时间 180 帧 ≈ 3 秒 */
+  ST.foodDm.push({text,x,y,life:180,dy:-1.5});
+}
+function drawFoodDm(){
+  ctx.save();
+  ST.foodDm.forEach((d,i)=>{
+    ctx.globalAlpha=d.life/180;
+    ctx.fillStyle=['#ff6347','#ffa500','#ff69b4'][i%3];
+    ctx.strokeStyle='#000';ctx.lineWidth=2;
+    ctx.font='bold 18px monospace';
+    ctx.textAlign='center';
+    ctx.strokeText(d.text,d.x,d.y);
+    ctx.fillText(d.text,d.x,d.y);
+    d.y+=d.dy;
+    d.life--;
+    if(d.life<=0)ST.foodDm.splice(i,1);
+  });
+  ctx.restore();
+}
+
+/* ================= 工具函数 ================= */
+const drawBar=(x,y,w,h,val,max,color)=>{
+  ctx.fillStyle='#333';ctx.fillRect(x,y,w,h);
+  ctx.fillStyle=color;ctx.fillRect(x,y,w*(val/max),h);
+  ctx.strokeStyle='#fff';ctx.strokeRect(x,y,w,h);
+};
+const drawStars=()=>{
+  ST.stars.forEach(s=>{
+    s.y+=s.v;if(s.y>H){s.y=0;s.x=rand(0,W);}
+    ctx.save();ctx.globalAlpha=s.o;
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  });
+};
+const drawPlayer=()=>{
+  ctx.save();if(ST.player.invincible>0&&(ST.frame%6<3))ctx.globalAlpha=0.5;
+  ctx.translate(ST.player.x+PLAYER_WH/2,ST.player.y+PLAYER_WH/2);
+  ctx.fillStyle='#2ecc71';
+  ctx.beginPath();ctx.moveTo(0,-PLAYER_WH/2);ctx.lineTo(-PLAYER_WH/2,PLAYER_WH/2);ctx.lineTo(PLAYER_WH/2,PLAYER_WH/2);ctx.closePath();ctx.fill();
+  ctx.restore();
+  drawBar(10,40,100,12,ST.player.hp,ST.player.maxHp,'#2ecc71');
+  ctx.fillStyle='#fff';ctx.font='16px monospace';
+  const names=['激光','散射','追踪','穿透','炸弹','脉冲'];
+  const cfgIdx=Math.min(ST.weaponLevel,4);
+  ctx.fillText(`${names[ST.currentBranch]} Lv${cfgIdx+1}`,10,70);
+  if(ST.powerBuff>0){ctx.fillStyle='#ff0';ctx.fillText(`威力 ${Math.ceil(ST.powerBuff/60)}s`,10,90);}
+  if(ST.chipRapidUntil>ST.frame){ctx.fillStyle='#ff0';ctx.fillText(`极速 ${Math.ceil((ST.chipRapidUntil-ST.frame)/60)}s`,10,110);}
+  ctx.fillText(`僚机 ${ST.wingmen.length}`,10,130);
+  if(ST.energyFullEffect>0){ctx.fillStyle='#ff69b4';ctx.fillText(`特效 ${Math.ceil(ST.energyFullEffect/60)}s`,10,150);}
+  ctx.fillText(`Score:${ST.score}`,10,30);
+};
+
+/* ================= 绘制敌人：烧鸡头 ================= */
+const drawEnemy=e=>{
+  const cx=e.x+e.w/2,cy=e.y+e.h/2,r=e.w/2;
+  /* 头 */
+  ctx.fillStyle=e.isElite?'#f39c12':'#e74c3c';
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+  /* 眼镜 */
+  ctx.strokeStyle='#222';ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(cx-r/3,cy-r/4,r/4,0,Math.PI*2);ctx.stroke();
+  ctx.beginPath();ctx.arc(cx+r/3,cy-r/4,r/4,0,Math.PI*2);ctx.stroke();
+  ctx.moveTo(cx-r/3+r/4,cy-r/4);ctx.lineTo(cx+r/3-r/4,cy-r/4);ctx.stroke();
+  /* 嘴 */
+  ctx.beginPath();ctx.arc(cx,cy+r/3,r/5,0,Math.PI);ctx.stroke();
+  /* 精英加领带 */
+  if(e.isElite){
+    ctx.fillStyle='#000';
+    ctx.fillRect(cx-r/2,cy+r/2,r,6);
+  }
+  /* 血量条 */
+  if(e.maxHp>1){
+    const barX=e.x+e.w/2-15;
+    drawBar(barX,e.y-8,30,4,e.hp,e.maxHp,'#e74c3c');
+  }
+};
+
+/* ================= 其余原有函数与逻辑 ================= */
+const transitionThreshold=()=>20+5*ST.bossRound;
+const drawTransitionBar=()=>{
+  const max=transitionThreshold();
+  if(!ST.boss&&ST.transitionEnergy<max){
+    ctx.save();ctx.globalAlpha=0.8;
+    drawBar(W/2-100,H-40,200,12,ST.transitionEnergy,max,'#3498db');
+    ctx.fillStyle='#fff';ctx.font='16px monospace';ctx.textAlign='center';
+    ctx.fillText('过渡能量',W/2,H-20);ctx.restore();
+  }
+};
+const spawnDrop=(x,y,type)=>{
+  ST.drops.push({x,y,r:15,type,color:type==='weapon'?'#ffd700':'#00e5ff',text:type==='weapon'?'W':'C'});
+};
+const updateDrops=()=>{
+  ST.drops.forEach(d=>{
+    d.y+=2;if(d.y>H+50)d.dead=true;
+    const dx=d.x-(ST.player.x+PLAYER_WH/2),dy=d.y-(ST.player.y+PLAYER_WH/2);
+    if(Math.sqrt(dx*dx+dy*dy)<d.r+25){
+      if(d.type==='weapon'){
+        if(ST.weaponLevel>=4){ST.powerBuff=600;}else{
+          Math.random()<0.5?ST.weaponLevel++:ST.currentBranch=(ST.currentBranch+1)%BRANCH.length;
+        }
+      }else if(d.type==='chip'){
+        ST.wingmen.length<3?ST.wingmen.push({}):ST.chipRapidUntil=ST.frame+300;
+      }
+      d.dead=true;
+    }
+  });
+  ST.drops=ST.drops.filter(d=>!d.dead);
+};
+const drawDrops=()=>{
+  ST.drops.forEach(d=>{
+    ctx.save();ctx.translate(d.x,d.y);ctx.rotate(Date.now()*0.002);
+    ctx.fillStyle=d.color;ctx.beginPath();ctx.arc(0,0,d.r,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#000';ctx.textAlign='center';ctx.font='12px monospace';
+    ctx.fillText(d.text,0,4);ctx.restore();
+  });
+};
+const spawnEnemy=()=>{
+  if(ST.boss||ST.enemies.length>=maxEnemies(ST.score))return;
+  const cfg=enemyCfg(ST.score);
+  const isElite=Math.random()<0.2+ST.bossRound*0.02;
+  ST.enemies.push({x:rand(0,W-cfg.size),y:-cfg.size,w:cfg.size,h:cfg.size,hp:cfg.hp*(isElite?2:1),maxHp:cfg.hp*(isElite?2:1),speed:cfg.speed,baseX:rand(0,W-cfg.size),drift:cfg.drift,fireCd:rand(0,60),isElite});
+};
+const spawnBoss=()=>{
+  if(ST.boss)return;
+  const timerReady=ST.bossTimer>=3600;
+  const energyReady=ST.transitionEnergy>=transitionThreshold();
+  if(!timerReady&&!energyReady)return;
+  ST.boss={x:W/2-BOSS_CFG.width/2,y:-BOSS_CFG.height,w:BOSS_CFG.width,h:BOSS_CFG.height,hp:bossHp(ST.score),maxHp:bossHp(ST.score),speed:BOSS_CFG.speed,color:BOSS_CFG.color,dir:1,fireCd:0};
+  ST.bossTimer=0;ST.transitionEnergy=0;
+};
+const updateBoss=()=>{
+  if(!ST.boss)return;
+  if(ST.boss.y<100)ST.boss.y+=2;
+  ST.boss.x+=ST.boss.dir*ST.boss.speed;
+  if(ST.boss.x<=0||ST.boss.x+ST.boss.w>=W)ST.boss.dir*=-1;
+  ST.boss.fireCd++;
+  if(ST.boss.fireCd>bossFireCd(ST.score)){
+    ST.boss.fireCd=0;
+    ST.enemyBullets.push({x:ST.boss.x+ST.boss.w/2,y:ST.boss.y+ST.boss.h,dx:rand(-1.5,1.5),dy:3.5,w:12,h:12,c:ST.boss.color});
+  }
+  drawEnemy(ST.boss);
+  drawBar(W/2-100,10,200,20,ST.boss.hp,ST.boss.maxHp,ST.boss.color);
+};
+const makeBullets=()=>{
+  const cfgIdx=Math.min(ST.weaponLevel,4);
+  if(cfgIdx<0||cfgIdx>=BRANCH[ST.currentBranch].length)return[];
+  const cfg=BRANCH[ST.currentBranch][cfgIdx];
+  const dmg=cfg.dmg+(ST.powerBuff>0?1:0);
+  const cx=ST.player.x+PLAYER_WH/2,cy=ST.player.y;
+  let swingAngle=0;
+  if(cfg.n!==1){ST.bulletAngle+=0.03*ST.bulletDir;if(Math.abs(ST.bulletAngle)>0.2)ST.bulletDir*=-1;swingAngle=ST.bulletAngle;}
+  if(ST.currentBranch===3){
+    const beamW=cfg.w*1.5,beamH=H+100;
+    ST.bulletAngle+=0.04*ST.bulletDir;if(Math.abs(ST.bulletAngle)>0.15)ST.bulletDir*=-1;
+    const exist=ST.piercingBeams[0];
+    if(exist){exist.x=cx+Math.sin(ST.bulletAngle)*30;exist.y=cy-beamH;exist.w=beamW;exist.h=beamH;exist.dmg=Math.max(dmg,2);exist.ttl=8;exist.angle=ST.bulletAngle;}
+    else ST.piercingBeams[0]={x:cx+Math.sin(ST.bulletAngle)*30,y:cy-beamH,w:beamW,h:beamH,c:cfg.c,dmg:Math.max(dmg,2),ttl:8,angle:ST.bulletAngle};
+    return[];
+  }
+  if(ST.currentBranch===4)return[{x:cx,y:cy,dx:0,dy:-8,w:cfg.w,h:cfg.h,c:cfg.c,shape:cfg.shape,dmg,bomb:true}];
+  if(ST.currentBranch===5){
+    ST.ringWaves.push({x:cx,y:cy,r:12,maxR:Math.max(W,H)+80,speed:10,dmg:Math.max(dmg,3),c:cfg.c,life:20});
+    return[];
+  }
+  if(ST.currentBranch===2){
+    let near=null,min=9999;
+    ST.enemies.forEach(e=>{const d=Math.hypot(e.x+e.w/2-cx,e.y+e.h/2-cy);if(d<min){min=d;near=e;}});
+    if(!near&&ST.boss)near=ST.boss;
+    const ang=near?Math.atan2((near.y+near.h/2)-cy,(near.x+near.w/2)-cx):-Math.PI/2;
+    const spd=8;
+    return[...Array(cfg.n)].map(()=>({x:cx,y:cy,dx:Math.cos(ang)*spd,dy:Math.sin(ang)*spd,spd,w:cfg.w,h:cfg.h,c:cfg.c,shape:cfg.shape,dmg}));
+  }
+  return[...Array(cfg.n)].map((_,i)=>{
+    const spread=(i-(cfg.n-1)/2)*(cfg.sp*Math.PI/180)+swingAngle;
+    const dx=Math.sin(spread)*10,dy=-Math.cos(spread)*10;
+    return{x:cx,y:cy,dx,dy,w:cfg.w,h:cfg.h,c:cfg.c,shape:cfg.shape,dmg};
+  });
+};
+
+/* ================= 主循环 ================= */
+let touchX=null,touchY=null;
+cvs.addEventListener('pointerdown',e=>{
+  const rect=cvs.getBoundingClientRect();
+  touchX=e.clientX-rect.left;touchY=e.clientY-rect.top;
+});
+cvs.addEventListener('pointermove',e=>{
+  if(touchX!==null){
+    const rect=cvs.getBoundingClientRect();
+    const dx=e.clientX-rect.left-touchX,dy=e.clientY-rect.top-touchY;
+    ST.player.x=Math.max(0,Math.min(W-PLAYER_WH,ST.player.x+dx));
+    ST.player.y=Math.max(H/2,Math.min(H-PLAYER_WH,ST.player.y+dy));
+    touchX=e.clientX-rect.left;touchY=e.clientY-rect.top;
+  }
+});
+window.addEventListener('pointerup',()=>{touchX=touchY=null;});
+cvs.addEventListener('contextmenu',e=>e.preventDefault());
+
+const loop=()=>{
+  try{
+    if(ST.gameOver){
+      ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='#fff';ctx.font='48px sans-serif';ctx.textAlign='center';
+      ctx.fillText('Game Over',W/2,H/2-30);
+      ctx.font='32px sans-serif';ctx.fillText(`Score:${ST.score}`,W/2,H/2+20);
+      if(ST.lastError){ctx.font='20px monospace';ctx.fillStyle='#ff0';ctx.fillText(ST.lastError,W/2,H/2+60);ctx.fillText('(刷新页面可重新开始)',W/2,H/2+90);}
+      return;
+    }
+    ST.frame++;ST.bossTimer++;
+    ctx.clearRect(0,0,W,H);
+    drawStars();drawPlayer();
+
+    /* 僚机 */
+    const cfgIdx=Math.min(ST.weaponLevel,4);
+    const fireCd=ST.chipRapidUntil>ST.frame?8:(20-ST.wingmen.length*3);
+    const angleBase=Date.now()*0.002;
+    const R=60;
+    const positions=[{dx:0,dy:-R},{dx:-R*Math.cos(Math.PI/6),dy:R*Math.sin(Math.PI/6)},{dx:R*Math.cos(Math.PI/6),dy:R*Math.sin(Math.PI/6)}];
+    ST.wingmen.forEach((w,i)=>{
+      if(i>2)return;
+      const pos=positions[i];
+      const x=ST.player.x+PLAYER_WH/2+Math.cos(angleBase)*pos.dx-Math.sin(angleBase)*pos.dy;
+      const y=ST.player.y+PLAYER_WH/2+Math.sin(angleBase)*pos.dx+Math.cos(angleBase)*pos.dy;
+      w.x=x;w.y=y;
+      if(ST.frame%fireCd===0){
+        ST.playerBullets.push({x,y,dx:0,dy:-8,w:BRANCH[ST.currentBranch][cfgIdx].w*0.8,h:BRANCH[ST.currentBranch][cfgIdx].h*0.8,c:BRANCH[ST.currentBranch][cfgIdx].c,shape:BRANCH[ST.currentBranch][cfgIdx].shape,dmg:Math.ceil(BRANCH[ST.currentBranch][cfgIdx].dmg*0.75)});
+      }
+    });
+
+    /* 特殊僚机 */
+    if(ST.energyFullEffect>0){
+      if(ST.specialWingmen.length===0){
+        for(let i=0;i<6;i++)ST.specialWingmen.push({angle:i*Math.PI/3,r:80,fireCd:0,x:0,y:0});
+      }
+      const px=ST.player.x+PLAYER_WH/2,py=ST.player.y+PLAYER_WH/2;
+      ST.specialWingmen.forEach(w=>{
+        w.angle+=0.03;
+        w.x=px+Math.cos(w.angle)*w.r;
+        w.y=py+Math.sin(w.angle)*w.r;
+        w.fireCd++;
+        if(w.fireCd>=12){
+          w.fireCd=0;
+          for(let k=0;k<7;k++){
+            const ang=w.angle+(k-3)*0.2;
+            ST.playerBullets.push({x:w.x,y:w.y,dx:Math.cos(ang)*7.5,dy:Math.sin(ang)*7.5,w:8,h:12,c:'#ff77ff',shape:'laser',dmg:3});
+          }
+        }
+      });
+      ST.energyFullEffect--;
+      if(ST.energyFullEffect<=0)ST.specialWingmen=[];
+    }
+
+    drawTransitionBar();updateDrops();drawDrops();
+    if(ST.player.invincible>0)ST.player.invincible--;
+    if(ST.powerBuff>0)ST.powerBuff--;
+    if(ST.frame%15===0)ST.playerBullets.push(...makeBullets());
+
+    /* 持续光束 */
+    ST.piercingBeams=ST.piercingBeams.filter(beam=>{
+      if(!beam)return false;
+      beam.ttl--;
+      for(let j=ST.enemies.length-1;j>=0;j--){
+        const e=ST.enemies[j];
+        if(hit({x:beam.x-beam.w/2,y:beam.y,w:beam.w,h:beam.h},e)){
+          e.hp-=Math.max(1,Math.floor(beam.dmg*0.25));
+          if(e.hp<=0){
+            ST.score+=e.isElite?100:20;ST.transitionEnergy++;
+            pushFoodDm(e.isElite?'elite':'normal',e.x+e.w/2,e.y+e.h/2);
+            if(e.isElite){Math.random()<0.5?spawnDrop(e.x+e.w/2,e.y+e.h/2,'weapon'):spawnDrop(e.x+e.w/2,e.y+e.h/2,'chip');}
+            else if(Math.random()<0.08)spawnDrop(e.x+e.w/2,e.y+e.h/2,'weapon');
+            ST.enemies.splice(j,1);
+          }
+        }
+      }
+      if(ST.boss&&hit({x:beam.x-beam.w/2,y:beam.y,w:beam.w,h:beam.h},ST.boss)){
+        ST.boss.hp-=Math.max(1,Math.floor(beam.dmg*0.25));
+        if(ST.boss.hp<=0){
+          ST.score+=200;pushFoodDm('boss',ST.boss.x+ST.boss.w/2,ST.boss.y+ST.boss.h/2);
+          spawnDrop(ST.boss.x+ST.boss.w/2,ST.boss.y+ST.boss.h/2,'weapon');
+          spawnDrop(ST.boss.x+ST.boss.w/2,ST.boss.y+ST.boss.h/2,'chip');
+          ST.boss=null;ST.bossRound++;ST.transitionEnergy=0;ST.showingWaveText=120;
+        }
+      }
+      ctx.save();ctx.globalAlpha=0.85;ctx.shadowColor=beam.c;ctx.shadowBlur=16;ctx.fillStyle=beam.c;
+      ctx.fillRect(beam.x-beam.w/2,beam.y,beam.w,beam.h);ctx.restore();
+      return beam.ttl>0;
+    });
+
+    /* 环形脉冲 */
+    ST.ringWaves=ST.ringWaves.filter(wv=>{
+      wv.r+=wv.speed;wv.life--;
+      const rr=wv.r,thickness=12;
+      for(let j=ST.enemies.length-1;j>=0;j--){
+        const e=ST.enemies[j];
+        const d=Math.hypot(e.x+e.w/2-wv.x,e.y+e.h/2-wv.y);
+        if(d>rr-thickness&&d<rr+thickness){
+          e.hp-=wv.dmg;
+          if(e.hp<=0){
+            ST.score+=e.isElite?100:20;ST.transitionEnergy++;
+            pushFoodDm(e.isElite?'elite':'normal',e.x+e.w/2,e.y+e.h/2);
+            if(e.isElite){Math.random()<0.5?spawnDrop(e.x+e.w/2,e.y+e.h/2,'weapon'):spawnDrop(e.x+e.w/2,e.y+e.h/2,'chip');}
+            else if(Math.random()<0.08)spawnDrop(e.x+e.w/2,e.y+e.h/2,'weapon');
+            ST.enemies.splice(j,1);
+          }
+        }
+      }
+      if(ST.boss){
+        const d=Math.hypot(ST.boss.x+ST.boss.w/2-wv.x,ST.boss.y+ST.boss.h/2-wv.y);
+        if(d>rr-thickness&&d<rr+thickness){
+          ST.boss.hp-=Math.max(1,Math.floor(wv.dmg*0.6));
+          if(ST.boss.hp<=0){
+            ST.score+=200;pushFoodDm('boss',ST.boss.x+ST.boss.w/2,ST.boss.y+ST.boss.h/2);
+            spawnDrop(ST.boss.x+ST.boss.w/2,ST.boss.y+ST.boss.h/2,'weapon');
+            spawnDrop(ST.boss.x+ST.boss.w/2,ST.boss.y+ST.boss.h/2,'chip');
+            ST.boss=null;ST.bossRound++;ST.transitionEnergy=0;ST.showingWaveText=120;
+          }
+        }
+      }
+      ctx.save();ctx.strokeStyle=wv.c;ctx.globalAlpha=0.85;ctx.lineWidth=6;
+      ctx.beginPath();ctx.arc(wv.x,wv.y,rr,0,Math.PI*2);ctx.stroke();ctx.restore();
+      return wv.life>0&&rr<wv.maxR;
+    });
+
+    /* 子弹 vs 敌人/Boss */
+    for(let i=ST.playerBullets.length-1;i>=0;i--){
+      const b=ST.playerBullets[i];
+      if(b.shape==='missile'){
+        const curSpd=b.spd||Math.hypot(b.dx||0,b.dy||0)||7.5;
+        b.spd=Math.min(10,curSpd+0.03);
+        let near=null,min=1e9;
+        for(let j=ST.enemies.length-1;j>=0;j--){
+          const e=ST.enemies[j];
+          const ex=e.x+e.w/2,ey=e.y+e.h/2;
+          const d=Math.hypot(ex-b.x,ey-b.y);
+          if(d<min){min=d;near=e;}
+        }
+        if(ST.boss){const bx=ST.boss.x+ST.boss.w/2,by=ST.boss.y+ST.boss.h/2;const bd=Math.hypot(bx-b.x,by-b.y);if(!near||bd<min)near=ST.boss;}
+        if(near){
+          const targetAng=Math.atan2((near.y+near.h/2)-b.y,(near.x+near.w/2)-b.x);
+          const curAng=Math.atan2(b.dy||-1,b.dx||0);
+          let diff=targetAng-curAng;diff=Math.atan2(Math.sin(diff),Math.cos(diff));
+          const maxTurn=0.12;const newAng=curAng+Math.max(-maxTurn,Math.min(maxTurn,diff));
+          b.dx=Math.cos(newAng)*b.spd;b.dy=Math.sin(newAng)*b.spd;
+        }else{const curAng=Math.atan2(b.dy||-1,b.dx||0);b.dx=Math.cos(curAng)*b.spd;b.dy=Math.sin(curAng)*b.spd;}
+      }
+      b.x+=b.dx;b.y+=b.dy;
+      if(b.shape!=='pierce'&&(b.y<-50||b.y>H+50||b.x<-50||b.x>W+50)){ST.playerBullets.splice(i,1);continue;}
+      if(b.bomb&&ST.enemies.length){
+        for(let j=ST.enemies.length-1;j>=0;j--){
+          const e=ST.enemies[j];
+          if(hit(b,e)){
+            e.hp-=b.dmg;
+            for(let k=0;k<3;k++){
+              const ang=k*Math.PI*2/3;
+              ST.playerBullets.push({x:b.x,y:b.y,dx:Math.cos(ang)*5,dy:Math.sin(ang)*5,w:4,h:6,c:b.c,shape:'laser',dmg:1});
+            }
+            ST.playerBullets.splice(i,1);break;
+          }
+        }
+        continue;
+      }
+      let hitFlag=false;
+      for(let j=ST.enemies.length-1;j>=0;j--){
+        const e=ST.enemies[j];
+        if(hit(b,e)){
+          e.hp-=b.dmg;hitFlag=b.shape!=='pierce';
+          if(e.hp<=0){
+            ST.score+=e.isElite?100:20;ST.transitionEnergy++;
+            pushFoodDm(e.isElite?'elite':'normal',e.x+e.w/2,e.y+e.h/2);
+            if(e.isElite){Math.random()<0.5?spawnDrop(e.x+e.w/2,e.y+e.h/2,'weapon'):spawnDrop(e.x+e.w/2,e.y+e.h/2,'chip');}
+            else if(Math.random()<0.08)spawnDrop(e.x+e.w/2,e.y+e.h/2,'weapon');
+            ST.enemies.splice(j,1);
+          }
+          break;
+        }
+      }
+      if(hitFlag){ST.playerBullets.splice(i,1);continue;}
+      if(ST.boss&&hit(b,ST.boss)){
+        ST.boss.hp-=b.dmg;
+        if(b.shape!=='pierce')ST.playerBullets.splice(i,1);
+        if(ST.boss.hp<=0){
+          ST.score+=200;pushFoodDm('boss',ST.boss.x+ST.boss.w/2,ST.boss.y+ST.boss.h/2);
+          spawnDrop(ST.boss.x+ST.boss.w/2,ST.boss.y+ST.boss.h/2,'weapon');
+          spawnDrop(ST.boss.x+ST.boss.w/2,ST.boss.y+ST.boss.h/2,'chip');
+          ST.boss=null;ST.bossRound++;ST.transitionEnergy=0;ST.showingWaveText=120;
+        }
+        continue;
+      }
+      /* 绘制子弹 */
+      ctx.save();if(b.dmg>1){ctx.shadowColor=b.c;ctx.shadowBlur=8;}ctx.fillStyle=b.c;
+      switch(b.shape){
+        case 'laser':case 'pierce':ctx.fillRect(b.x-b.w/2,b.y,b.w,b.h);break;
+        case 'missile':ctx.fillRect(b.x-b.w/2,b.y,b.w,b.h);ctx.fillStyle='#fff';ctx.fillRect(b.x-b.w/4,b.y+b.h,b.w/2,b.h/2);break;
+        case 'bomb':ctx.beginPath();ctx.arc(b.x,b.y+b.h/2,b.w/2,0,Math.PI*2);ctx.fill();break;
+        case 'ring':ctx.beginPath();ctx.arc(b.x,b.y,b.w/2,0,Math.PI*2);ctx.fill();break;
+      }
+      ctx.restore();
+    }
+    /* 生成敌人 & Boss */
+    spawnBoss();updateBoss();
+    if(ST.frame%70===0&&!ST.boss)spawnEnemy();
+    ST.enemies=ST.enemies.filter(e=>{
+      e.y+=e.speed;
+      e.x=e.baseX+Math.sin(ST.frame*0.025)*e.drift;
+      e.fireCd++;
+      if(e.fireCd>100&&Math.random()<0.015){
+        ST.enemyBullets.push({x:e.x+e.w/2,y:e.y+e.h,dx:rand(-1.5,1.5),dy:3.5,w:6,h:6,c:'#f39c12'});
+        e.fireCd=0;
+      }
+      if(e.y>H)return false;
+      if(hit(e,ST.player)&&ST.player.invincible===0){
+        ST.player.hp--;ST.player.invincible=60;
+        if(ST.player.hp<=0)ST.gameOver=true;
+        return false;
+      }
+      drawEnemy(e);return true;
+    });
+    ST.enemyBullets=ST.enemyBullets.filter(eb=>{
+      eb.x+=eb.dx;eb.y+=eb.dy;
+      if(eb.y>H||eb.x<-10||eb.x>W+10)return false;
+      ctx.save();ctx.shadowColor=eb.c;ctx.shadowBlur=5;
+      ctx.fillStyle=eb.c;ctx.beginPath();ctx.arc(eb.x,eb.y,eb.w/2,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+      if(hit(eb,ST.player)&&ST.player.invincible===0){
+        ST.player.hp--;ST.player.invincible=60;
+        if(ST.player.hp<=0)ST.gameOver=true;
+        return false;
+      }
+      return true;
+    });
+    /* 料理弹幕 */
+    drawFoodDm();
+    /* 波次提示 */
+    if(ST.showingWaveText>0){
+      ctx.fillStyle='rgba(255,255,255,0.9)';
+      ctx.font='36px monospace';ctx.textAlign='center';
+      ctx.fillText(`第 ${ST.bossRound} 波 开始！`,W/2,H/2);
+      ST.showingWaveText--;
+    }
+  }catch(err){
+    ST.lastError=err.message||'未知错误';
+    console.error(err);
+    ST.gameOver=true;
+  }
+  requestAnimationFrame(loop);
+};
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
