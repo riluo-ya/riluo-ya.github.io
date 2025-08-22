@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>弹幕躲避</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        
+        #gameCanvas {
+            display: block;
+            background: linear-gradient(to bottom, #1a1a2e, #16213e);
+        }
+        
+        #ui {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 18px;
+            z-index: 10;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        #invincibleIndicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffff00;
+            font-size: 24px;
+            font-weight: bold;
+            display: none;
+            z-index: 15;
+            text-shadow: 0 0 10px #ffff00;
+            animation: pulse 0.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+        
+        #gameOver {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            text-align: center;
+            display: none;
+            z-index: 20;
+            background: rgba(0,0,0,0.8);
+            padding: 30px;
+            border-radius: 10px;
+        }
+        
+        #restartBtn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            background: #0f4c75;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 30;
+        }
+        
+        .difficulty-btn {
+            margin: 10px;
+            padding: 15px 30px;
+            font-size: 18px;
+            background: #3282b8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .difficulty-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .difficulty-btn[data-difficulty="easy"] { background: #4caf50; }
+        .difficulty-btn[data-difficulty="medium"] { background: #ff9800; }
+        .difficulty-btn[data-difficulty="hard"] { background: #f44336; }
+        .difficulty-btn[data-difficulty="extreme"] { background: #9c27b0; }
+        
+        #timer {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-size: 18px;
+            z-index: 10;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="ui">
+        <div>得分: <span id="score">0</span></div>
+        <div>生命: <span id="lives">3</span></div>
+        <div id="difficultyDisplay">难度: <span id="currentDifficulty">普通</span></div>
+    </div>
+    
+    <div id="timer">
+        时间: <span id="gameTime">00:00</span>
+    </div>
+    
+    <div id="invincibleIndicator">无敌时间!</div>
+    
+    <div id="gameOver">
+        <h2>游戏结束</h2>
+        <p>最终得分: <span id="finalScore">0</span></p>
+        <p>存活时间: <span id="finalTime">00:00</span></p>
+        <p>难度等级: <span id="finalDifficulty">-</span></p>
+        <button id="restartBtn">重新开始</button>
+    </div>
+    
+    <div id="startScreen">
+        <h1>弹幕躲避游戏</h1>
+        <p style="margin-bottom: 20px;">选择难度开始游戏</p>
+        <button class="difficulty-btn" data-difficulty="easy">简单</button>
+        <button class="difficulty-btn" data-difficulty="medium">普通</button>
+        <button class="difficulty-btn" data-difficulty="hard">困难</button>
+        <button class="difficulty-btn" data-difficulty="extreme">极限</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const livesEl = document.getElementById('lives');
+        const gameOverEl = document.getElementById('gameOver');
+        const finalScoreEl = document.getElementById('finalScore');
+        const finalTimeEl = document.getElementById('finalTime');
+        const finalDifficultyEl = document.getElementById('finalDifficulty');
+        const restartBtn = document.getElementById('restartBtn');
+        const startScreen = document.getElementById('startScreen');
+        const gameTimeEl = document.getElementById('gameTime');
+        const currentDifficultyEl = document.getElementById('currentDifficulty');
+        const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+        const invincibleIndicator = document.getElementById('invincibleIndicator');
+
+        // 设置画布大小
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // 难度配置
+        const difficultySettings = {
+            easy: {
+                name: '简单',
+                baseSpeed: 1.5,
+                speedMultiplier: 0.02,
+                baseInterval: 800,
+                intervalMultiplier: 0.3,
+                bulletSize: 1.2,
+                scoreMultiplier: 0.8
+            },
+            medium: {
+                name: '普通',
+                baseSpeed: 2,
+                speedMultiplier: 0.03,
+                baseInterval: 600,
+                intervalMultiplier: 0.4,
+                bulletSize: 1.0,
+                scoreMultiplier: 1.0
+            },
+            hard: {
+                name: '困难',
+                baseSpeed: 2.5,
+                speedMultiplier: 0.05,
+                baseInterval: 500,
+                intervalMultiplier: 0.5,
+                bulletSize: 0.9,
+                scoreMultiplier: 1.2
+            },
+            extreme: {
+                name: '极限',
+                baseSpeed: 3,
+                speedMultiplier: 0.08,
+                baseInterval: 400,
+                intervalMultiplier: 0.6,
+                bulletSize: 0.8,
+                scoreMultiplier: 1.5
+            }
+        };
+
+        // 游戏变量
+        let player = {
+            x: canvas.width / 2,
+            y: canvas.height - 100,
+            radius: 20,
+            speed: 5,
+            invincible: false,
+            invincibleEndTime: 0,
+            flashInterval: null
+        };
+
+        let bullets = [];
+        let particles = [];
+        let score = 0;
+        let lives = 3;
+        let gameRunning = false;
+        let currentDifficulty = 'medium';
+        let gameStartTime = 0;
+        let gameTime = 0;
+        let lastBulletTime = 0;
+
+        // 触摸控制
+        let touchX = null;
+        let touchY = null;
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            touchX = touch.clientX;
+            touchY = touch.clientY;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (gameRunning) {
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - touchX;
+                const deltaY = touch.clientY - touchY;
+                
+                player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x + deltaX));
+                player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y + deltaY));
+                
+                touchX = touch.clientX;
+                touchY = touch.clientY;
+            }
+        });
+
+        // 获取当前难度设置
+        function getDifficultySetting() {
+            return difficultySettings[currentDifficulty];
+        }
+
+        // 计算动态难度
+        function calculateDynamicDifficulty() {
+            const setting = getDifficultySetting();
+            const timeFactor = gameTime / 10000;
+            const scoreFactor = score / 50;
+            
+            const totalFactor = 1 + (timeFactor + scoreFactor) * setting.speedMultiplier;
+            return Math.min(totalFactor, 5);
+        }
+
+        // 开始无敌时间
+        function startInvincibility() {
+            player.invincible = true;
+            player.invincibleEndTime = Date.now() + 2000; // 2秒无敌
+            invincibleIndicator.style.display = 'block';
+            
+            // 闪烁效果
+            let flashCount = 0;
+            player.flashInterval = setInterval(() => {
+                if (Date.now() > player.invincibleEndTime) {
+                    endInvincibility();
+                    return;
+                }
+                
+                const remainingTime = Math.ceil((player.invincibleEndTime - Date.now()) / 1000);
+                invincibleIndicator.textContent = `无敌时间! ${remainingTime}s`;
+                
+                flashCount++;
+            }, 100);
+        }
+
+        // 结束无敌时间
+        function endInvincibility() {
+            player.invincible = false;
+            player.invincibleEndTime = 0;
+            invincibleIndicator.style.display = 'none';
+            if (player.flashInterval) {
+                clearInterval(player.flashInterval);
+                player.flashInterval = null;
+            }
+        }
+
+        // 创建弹幕
+        function createBullet() {
+            const setting = getDifficultySetting();
+            const dynamicDifficulty = calculateDynamicDifficulty();
+            
+            const side = Math.random() < 0.5 ? 'top' : 'left';
+            let bullet = {
+                x: side === 'top' ? Math.random() * canvas.width : 0,
+                y: side === 'top' ? 0 : Math.random() * canvas.height,
+                radius: (8 + Math.random() * 4) * setting.bulletSize,
+                speed: (setting.baseSpeed + Math.random() * 2) * dynamicDifficulty,
+                angle: 0,
+                color: `hsl(${Math.random() * 360}, 100%, 50%)`
+            };
+            
+            if (side === 'top') {
+                bullet.angle = Math.PI / 2 + (Math.random() - 0.5) * Math.PI / 3;
+            } else {
+                bullet.angle = 0 + (Math.random() - 0.5) * Math.PI / 3;
+            }
+            
+            bullets.push(bullet);
+        }
+
+        // 创建粒子效果
+        function createParticles(x, y, color) {
+            const dynamicDifficulty = calculateDynamicDifficulty();
+            for (let i = 0; i < 10; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 10 * dynamicDifficulty,
+                    vy: (Math.random() - 0.5) * 10 * dynamicDifficulty,
+                    radius: 4,
+                    color: color,
+                    life: 40
+                });
+            }
+        }
+
+        // 格式化时间
+        function formatTime(ms) {
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        // 更新游戏
+        function update() {
+            if (!gameRunning) return;
+
+            // 更新时间
+            gameTime = Date.now() - gameStartTime;
+            gameTimeEl.textContent = formatTime(gameTime);
+
+            const setting = getDifficultySetting();
+            const dynamicDifficulty = calculateDynamicDifficulty();
+            const bulletInterval = Math.max(150, setting.baseInterval / dynamicDifficulty);
+
+            // 更新弹幕
+            bullets.forEach((bullet, index) => {
+                bullet.x += Math.cos(bullet.angle) * bullet.speed;
+                bullet.y += Math.sin(bullet.angle) * bullet.speed;
+
+                // 移除超出屏幕的弹幕
+                if (bullet.x < -50 || bullet.x > canvas.width + 50 || 
+                    bullet.y < -50 || bullet.y > canvas.height + 50) {
+                    bullets.splice(index, 1);
+                    score += Math.floor(setting.scoreMultiplier * dynamicDifficulty);
+                    scoreEl.textContent = score;
+                }
+
+                // 碰撞检测（无敌时忽略）
+                if (!player.invincible) {
+                    const dx = bullet.x - player.x;
+                    const dy = bullet.y - player.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < player.radius + bullet.radius) {
+                        createParticles(bullet.x, bullet.y, bullet.color);
+                        bullets.splice(index, 1);
+                        lives--;
+                        livesEl.textContent = lives;
+                        
+                        if (lives <= 0) {
+                            gameOver();
+                        } else {
+                            startInvincibility();
+                        }
+                    }
+                }
+            });
+
+            // 更新粒子
+            particles.forEach((particle, index) => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.life--;
+                particle.radius *= 0.95;
+                
+                if (particle.life <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+
+            // 检查无敌时间是否结束
+            if (player.invincible && Date.now() > player.invincibleEndTime) {
+                endInvincibility();
+            }
+
+            // 生成新弹幕
+            const currentTime = Date.now();
+            if (currentTime - lastBulletTime > bulletInterval) {
+                createBullet();
+                lastBulletTime = currentTime;
+            }
+        }
+
+        // 绘制游戏
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制玩家（无敌时闪烁效果）
+            ctx.save();
+            
+            if (player.invincible) {
+                const flashAlpha = 0.3 + 0.7 * Math.sin(Date.now() * 0.02);
+                ctx.globalAlpha = flashAlpha;
+                
+                // 无敌光环效果
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, player.radius + 10, 0, Math.PI * 2);
+                ctx.strokeStyle = '#ffff00';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+
+            // 玩家主体
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.fillStyle = player.invincible ? '#ffff00' : '#00ff88';
+            ctx.fill();
+            ctx.strokeStyle = player.invincible ? '#ffff00' : '#00ff88';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.restore();
+
+            // 绘制弹幕
+            bullets.forEach(bullet => {
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+                ctx.fillStyle = bullet.color;
+                ctx.fill();
+                
+                // 发光效果
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = bullet.color;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+
+            // 绘制粒子
+            particles.forEach(particle => {
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                ctx.fillStyle = particle.color;
+                ctx.fill();
+            });
+        }
+
+        // 游戏循环
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 游戏结束
+        function gameOver() {
+            gameRunning = false;
+            endInvincibility(); // 确保无敌状态结束
+            finalScoreEl.textContent = score;
+            finalTimeEl.textContent = formatTime(gameTime);
+            finalDifficultyEl.textContent = getDifficultySetting().name;
+            gameOverEl.style.display = 'block';
+        }
+
+        // 选择难度
+        function selectDifficulty(difficulty) {
+            currentDifficulty = difficulty;
+            currentDifficultyEl.textContent = getDifficultySetting().name;
+            startGame();
+        }
+
+        // 开始游戏
+        function startGame() {
+            startScreen.style.display = 'none';
+            bullets = [];
+            particles = [];
+            score = 0;
+            lives = 3;
+            gameStartTime = Date.now();
+            gameTime = 0;
+            player.invincible = false;
+            player.invincibleEndTime = 0;
+            
+            player.x = canvas.width / 2;
+            player.y = canvas.height - 100;
+            
+            scoreEl.textContent = score;
+            livesEl.textContent = lives;
+            gameOverEl.style.display = 'none';
+            gameRunning = true;
+            lastBulletTime = Date.now();
+        }
+
+        // 重新开始
+        function restart() {
+            gameOverEl.style.display = 'none';
+            startScreen.style.display = 'flex';
+        }
+
+        // 事件监听
+        restartBtn.addEventListener('click', restart);
+        difficultyBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                selectDifficulty(e.target.dataset.difficulty);
+            });
+        });
+
+        // 启动游戏循环
+        gameLoop();
+    </script>
+</body>
+</html>
