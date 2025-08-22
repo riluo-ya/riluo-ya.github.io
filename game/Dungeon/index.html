@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>地下城文字Roguelike</title>
+<style>
+    body{margin:0;font-family:Segoe UI;background:#0a0a0a;color:#e6e6e6;display:flex;justify-content:center;align-items:flex-start;padding:20px}
+    .wrap{max-width:900px;width:100%;display:grid;grid-template-columns:1fr 2fr;gap:15px}
+    .panel{background:#111927;border:1px solid #2a3f5f;border-radius:10px;padding:15px}
+    .panel h3{margin:0 0 10px;color:#4cc9f0}
+    .stat{display:flex;justify-content:space-between;margin:4px 0}
+    #log{height:400px;overflow-y:auto;background:#050b18;border:1px solid #2a5480;padding:10px;border-radius:6px;font-family:Consolas;font-size:14px}
+    #log div{margin:4px 0}
+    #actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+    button{background:#0f3460;color:#fff;border:1px solid #4cc9f0;border-radius:6px;padding:8px 14px;cursor:pointer;transition:.2s}
+    button:hover{background:#1a3a6d;transform:translateY(-1px)}
+    button:disabled{background:#555;color:#888;border-color:#555;cursor:not-allowed;transform:none}
+    .gold{color:#f9ca24}.red{color:#e74c3c}.green{color:#2ecc71}.blue{color:#3498db}.purple{color:#9b59b6}
+
+    /* 商店卡片样式 */
+    .shop-card{
+      background:#0f3460;
+      border:1px solid #4cc9f0;
+      border-radius:6px;
+      padding:8px 12px;
+      cursor:pointer;
+      transition:.2s;
+      text-align:center;
+      font-size:13px;
+    }
+    .shop-card:hover:not(.disabled){
+      background:#1a3a6d;
+      transform:translateY(-1px);
+    }
+    .shop-card.disabled{
+      background:#555;
+      color:#888;
+      border-color:#555;
+      cursor:not-allowed;
+      transform:none;
+    }
+    @media(max-width:700px){.wrap{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+    <div class="panel">
+        <h3>冒险者</h3>
+        <div class="stat"><span>层数:</span><span id="floor">1</span></div>
+        <div class="stat"><span>生命:</span><span id="hp">100/100</span></div>
+    <div class="stat"><span>攻击:</span><span id="atk">10</span></div>
+    <div class="stat"><span>防御:</span><span id="def">0</span></div>
+    <div class="stat"><span>金币:</span><span id="gold">0</span></div>
+    <hr>
+    <div class="stat"><span>武器:</span><span id="weapon">无</span></div>
+    <div class="stat"><span>头盔:</span><span id="helmet">无</span></div>
+    <div class="stat"><span>胸甲:</span><span id="chest">无</span></div>
+    <div class="stat"><span>护腿:</span><span id="legs">无</span></div>
+    <div class="stat"><span>靴子:</span><span id="boots">无</span></div>
+    </div>
+
+    <div class="panel">
+        <h3>冒险日志</h3>
+        <div id="log"></div>
+        <div id="actions"></div>
+    </div>
+</div>
+
+<script>
+/* ========= 配置 ========= */
+const cfg = {
+    baseHp:100, baseAtk:10, baseDef:0,
+    healCost:25, atkCost:40, defCost:35,
+    bossEvery:5,
+    weapons:[
+        {name:"生锈铁剑",cost:30,atk:2,eff:"攻击+2"},
+        {name:"火焰法杖",cost:60,atk:3,fire:5,eff:"攻击+3, 附加5火伤"},
+        {name:"吸血匕首",cost:100,atk:4,steal:.2,eff:"攻击+4, 吸血20%"},
+        {name:"炎龙之牙",atk:8,fire:10,boss:true,eff:"攻击+8, 附加10火伤"}
+    ],
+    armors:{
+        helmet:[
+            {name:"皮头盔",cost:30,def:2,eff:"防御+2"},
+            {name:"铁头盔",cost:60,def:4,eff:"防御+4"}
+        ],
+        chest:[
+            {name:"皮胸甲",cost:40,def:3,eff:"防御+3"},
+            {name:"铁胸甲",cost:80,def:6,eff:"防御+6"}
+        ],
+        legs:[
+            {name:"皮护腿",cost:35,def:2,eff:"防御+2"},
+            {name:"铁护腿",cost:70,def:4,eff:"防御+4"}
+        ],
+        boots:[
+            {name:"皮靴",cost:20,def:1,eva:2,eff:"防御+1, 闪避+2%"},
+            {name:"铁靴",cost:40,def:2,eva:4,eff:"防御+2, 闪避+4%"}
+        ]
+    },
+    monsters:[
+        "哥布林","史莱姆","骷髅","巨蛛","兽人","幽灵","牛头怪","美杜莎",
+        "穴居人","血蝙蝠","暗影犬","瘟疫鼠","岩石傀儡","狂躁狼","深渊触手","巫妖学徒"
+    ],
+    bosses:[
+        "火焰领主","冰霜女王","暗影刺客","雷霆之王","深渊恶魔",
+        "腐化古树","虚空吞噬者","剧毒九头蛇","机械泰坦","噬魂魔龙"
+    ],
+    exclusiveShopItems:[
+        {name:"再生指环",cost:150,effect:"regen",value:5,eff:"每回合恢复5生命"},
+        {name:"幸运币",cost:120,effect:"goldFind",value:0.2,eff:"战斗金币+20%"},
+        {name:"闪避护符",cost:180,effect:"eva",value:10,eff:"闪避+10%"}
+    ],
+    exclusiveExploreEvents:[
+        {name:"古老祭坛",effect:"maxHp",value:20,eff:"最大生命+20",chance:0.15},
+        {name:"神秘宝箱",effect:"gold",value:100,eff:"获得100金币",chance:0.25},
+        {name:"力量之书",effect:"atk",value:3,eff:"攻击+3",chance:0.1}
+    ]
+};
+
+/* ========= 状态 ========= */
+let st={
+    floor:1,hp:cfg.baseHp,maxHp:cfg.baseHp,atk:cfg.baseAtk,def:cfg.baseDef,gold:0,
+    weapon:null,helmet:null,chest:null,legs:null,boots:null,
+    fire:0,steal:0,eva:0,regen:0,goldFind:0,
+    enemy:null,
+    exploredThisFloor:false
+};
+
+/* ========= 存档 ========= */
+const SAVE_KEY='rogue_save';
+const save=()=>localStorage.setItem(SAVE_KEY,JSON.stringify(st));
+const load=()=>JSON.parse(localStorage.getItem(SAVE_KEY));
+const clearSave=()=>{localStorage.removeItem(SAVE_KEY);location.reload();};
+
+/* ========= 工具 ========= */
+const $=id=>document.getElementById(id);
+const log=(t,c='')=>{
+    const d=document.createElement('div');
+    d.innerHTML=t;
+    if(c)d.className=c;
+    $('log').appendChild(d);
+    $('log').scrollTop=1e9;
+    save(); // 每次日志更新后保存
+};
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const chance=p=>Math.random()<p;
+
+/* ========= UI ========= */
+const render=()=>{
+    $('floor').textContent=st.floor;
+    $('hp').textContent=`${st.hp}/${st.maxHp}`;
+    $('atk').textContent=st.atk;
+    $('def').textContent=st.def;
+    $('gold').textContent=st.gold;
+    ['weapon','helmet','chest','legs','boots'].forEach(x=>$(x).textContent=st[x]?st[x].name:'无');
+};
+const clearBtns=()=>{$('actions').innerHTML='';$('actions').style.display='flex';}
+const btn=(txt,fn,dis,tip)=>{
+    const b=document.createElement('button');
+    b.textContent=txt;b.onclick=fn;b.disabled=!!dis;
+    if(tip)b.title=tip;
+    $('actions').appendChild(b);return b;
+}
+
+/* ========= 战斗 ========= */
+const genEnemy=()=>{
+    const boss=st.floor%cfg.bossEvery===0;
+    let hp=rnd(10+st.floor*5,10+st.floor*10);
+    let atk=rnd(2+st.floor,5+st.floor);
+    let gold=rnd(5,15);
+    let name='';
+    if(boss){
+        name=cfg.bosses[rnd(0,cfg.bosses.length-1)];
+        hp*=3;atk*=2;gold*=5;
+    }else{
+        name=cfg.monsters[rnd(0,cfg.monsters.length-1)]+' Lv'+st.floor;
+    }
+    return {name,hp,maxHp:hp,atk,gold,boss};
+}
+const enemyTurn=()=>{
+    if(st.hp<=0)return;
+    if(st.regen>0 && st.hp<st.maxHp){
+        const heal=Math.min(st.regen,st.maxHp-st.hp);
+        st.hp+=heal;
+        log(`再生指环恢复 ${heal} 生命`,'green');
+    }
+    if(chance(st.eva/100)){log('闪避!','green');}else{
+        const dmg=Math.max(1,rnd(st.enemy.atk-1,st.enemy.atk+2)-st.def);
+        st.hp-=dmg;log(`${st.enemy.name} 造成 ${dmg} 伤`,'red');
+    }
+    if(st.hp<=0){log('你倒下了……','red');clearBtns();btn('重新开始',startGame);return;}
+    render();
+}
+const playerAtk=()=>{
+    if(!st.enemy)return;
+    let dmg=st.atk+rnd(0,3);
+    if(st.fire)dmg+=st.fire;
+    st.enemy.hp-=dmg;
+    log(`你造成 ${dmg} 伤`);
+    if(st.steal){const h=Math.floor(dmg*st.steal);st.hp=Math.min(st.hp+h,st.maxHp);log(`吸血 ${h}`,'green');}
+    if(st.enemy.hp<=0){
+        let gold=st.enemy.gold;
+        if(st.goldFind>0){
+            const bonus=Math.floor(gold*st.goldFind);
+            gold+=bonus;
+            log(`幸运币额外 ${bonus} 金`,'gold');
+        }
+        st.gold+=gold;
+        if(st.enemy.boss){
+            const w=cfg.weapons.find(x=>x.boss);
+            st.atk+=w.atk;st.fire+=w.fire||0;
+            st.weapon=w;
+            log(`击败首领！掉落 ${w.name}！`,'gold');
+        }
+        log(`击败 ${st.enemy.name}！+${gold}金`,'gold');
+        st.floor++;st.exploredThisFloor=false;
+        render();
+        setTimeout(nextRoom,800);
+    }else{setTimeout(enemyTurn,600);}
+}
+
+/* ========= 房间 ========= */
+const nextRoom=()=>{
+    clearBtns();
+    log(`第${st.floor}层`);
+    btn('前进',()=>{st.enemy=genEnemy();log(`遭遇 ${st.enemy.name}(${st.enemy.hp}/${st.enemy.atk})`);render();battle();});
+    btn('探索',()=>{
+        if(st.exploredThisFloor){log('本层已探索','blue');return;}
+        st.exploredThisFloor=true;
+        let ev=null;
+        for(const e of cfg.exclusiveExploreEvents)if(chance(e.chance)){ev=e;break;}
+        if(ev){
+            if(ev.effect==='maxHp'){st.maxHp+=ev.value;st.hp+=ev.value;log(`发现 ${ev.name}！${ev.eff}`,'green');}
+            else if(ev.effect==='gold'){st.gold+=ev.value;log(`发现 ${ev.name}！${ev.eff}`,'gold');}
+            else if(ev.effect==='atk'){st.atk+=ev.value;log(`发现 ${ev.name}！${ev.eff}`,'green');}
+        }else{
+            const r=rnd(1,4);
+            if(r===1){const h=rnd(10,25);st.hp=Math.min(st.hp+h,st.maxHp);log(`泉水 +${h}血`,'green');}
+            else if(r===2){const g=rnd(10,25);st.gold+=g;log(`宝箱 +${g}金`,'gold');}
+            else if(r===3){st.atk+=1;log('力量符文 +1攻','green');}
+            else{st.def+=1;log('盾牌 +1防','green');}
+        }
+        render();setTimeout(nextRoom,600);
+    },st.exploredThisFloor);
+    btn('商店',shop);
+}
+const battle=()=>{
+    clearBtns();
+    btn('攻击',playerAtk);
+    btn('逃跑(50%)',()=>chance(.5)?(log('逃跑成功'),nextRoom()):(log('逃跑失败'),enemyTurn()));
+    btn('自动战斗',autoBattle,st.hp<=0);
+}
+
+/* ========= 商店 ========= */
+const shopCard=(item,buyFn,disabled,tip)=>{
+    const d=document.createElement('div');
+    d.className='shop-card';
+    d.innerHTML=`<b>${item.name}</b><br><small>${item.eff}</small><br><span class="gold">${item.cost} 金</span>`;
+    d.onclick=disabled?null:buyFn;
+    d.classList.toggle('disabled',disabled);
+    d.title=tip||'';
+    $('actions').appendChild(d);
+};
+const shop=()=>{
+    clearBtns();
+    $('actions').style.display='grid';
+    $('actions').style.gridTemplateColumns='repeat(auto-fill,minmax(160px,1fr))';
+    $('actions').style.gap='8px';
+    log('—— 商店 ——','gold');
+    const tier=st.floor>=21?2:st.floor>=11?1:0;
+
+    /* 武器 */
+    cfg.weapons.filter(w=>!w.boss&&tier>=cfg.weapons.indexOf(w)/(cfg.weapons.length-1))
+               .forEach(w=>shopCard(w,()=>{st.gold-=w.cost;st.atk+=w.atk;st.fire+=w.fire||0;st.weapon=w;log('购买成功');shop();},st.gold<w.cost,'金币不足'));
+
+    /* 防具 */
+    ['helmet','chest','legs','boots'].forEach(type=>{
+        cfg.armors[type].filter(a=>tier>=cfg.armors[type].indexOf(a)/(cfg.armors[type].length-1))
+                        .forEach(a=>shopCard(a,()=>{st.gold-=a.cost;st.def+=a.def;st[type]=a;log('购买成功');shop();},st.gold<a.cost,'金币不足'));
+    });
+
+    /* 独家道具 */
+    cfg.exclusiveShopItems.forEach(it=>shopCard(it,()=>{
+        st.gold-=it.cost;
+        if(it.effect==='regen')st.regen+=it.value;
+        if(it.effect==='goldFind')st.goldFind+=it.value;
+        if(it.effect==='eva')st.eva+=it.value;
+        log(`购买了 ${it.name}`,'green');shop();
+    },st.gold<it.cost,'金币不足'));
+
+    /* 升级药水 */
+    const upg=[
+        {name:'+30 生命',cost:cfg.healCost,eff:'回复30生命',fn:()=>{st.hp=Math.min(st.hp+30,st.maxHp);log('恢复 30 生命','green');}},
+        {name:'+1 攻击',cost:cfg.atkCost,eff:'攻击永久+1',fn:()=>{st.atk++;log('攻击+1','green');}},
+        {name:'+1 防御',cost:cfg.defCost,eff:'防御永久+1',fn:()=>{st.def++;log('防御+1','green');}}
+    ];
+    upg.forEach(u=>shopCard(u,()=>{st.gold-=u.cost;u.fn();shop();},st.gold<u.cost||(u.name.includes('生命')&&st.hp>=st.maxHp),st.gold<u.cost?'金币不足':u.name.includes('生命')&&st.hp>=st.maxHp?'生命已满':''));
+    const leave=document.createElement('button');
+    leave.textContent='离开商店';
+    leave.onclick=nextRoom;
+    $('actions').appendChild(leave);
+};
+
+/* ========= 自动战斗 ========= */
+const autoBattle=()=>{
+    const loop=()=>{
+        if(st.hp<=0||!st.enemy||st.enemy.hp<=0)return;
+        playerAtk();
+        setTimeout(()=>{
+            if(st.enemy&&st.enemy.hp>0)setTimeout(loop,600);
+            else if(st.hp>0)setTimeout(loop,800);
+        },700);
+    };
+    log('⚔️ 自动战斗中...','blue');
+    loop();
+};
+
+/* ========= 启动 ========= */
+const initGame=()=>{
+    const loaded=load();
+    if(loaded){
+        st=loaded;
+        render();
+        log('继续上次的冒险...');
+        nextRoom();
+    }else{
+        startGame();
+    }
+};
+const startGame=()=>{
+    $('log').innerHTML='';
+    st={floor:1,hp:cfg.baseHp,maxHp:cfg.baseHp,atk:cfg.baseAtk,def:cfg.baseDef,gold:0,
+        weapon:null,helmet:null,chest:null,legs:null,boots:null,
+        fire:0,steal:0,eva:0,regen:0,goldFind:0,enemy:null,exploredThisFloor:false};
+    render();
+    log('欢迎来到地下城！');
+    nextRoom();
+};
+
+// 添加删除存档按钮
+document.addEventListener('keydown',(e)=>{
+    if(e.ctrlKey && e.key==='d'){
+        if(confirm('确定删除存档并重新开始吗？')){
+            clearSave();
+        }
+    }
+});
+
+initGame();
+</script>
+</body>
+</html>
