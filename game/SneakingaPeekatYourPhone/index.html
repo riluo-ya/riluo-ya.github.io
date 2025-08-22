@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>偷偷玩手机</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+        html,body{
+            margin:0;
+            height:100%;
+            background:#8a2be2;
+            font-family:Arial,Helvetica,sans-serif;
+            color:#000;
+            overflow:hidden;
+        }
+        .screen{
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            height:100%;
+            box-sizing:border-box;
+            padding:20px;
+        }
+        /* 白色框 */
+        .white-frame{
+            background:#fff;
+            border-radius:15px;
+            padding:30px 40px;
+            box-shadow:0 0 15px rgba(0,0,0,.25);
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            min-width:300px;
+        }
+        /* 鲜艳的按钮 */
+        .btn{
+            padding:12px 28px;
+            margin:8px;
+            border:none;
+            border-radius:25px;
+            cursor:pointer;
+            font-size:18px;
+            font-weight:bold;
+            color:#fff;
+            transition:transform .2s;
+        }
+        .btn:hover{transform:translateY(-2px);}
+        /* 各难度按钮颜色 */
+        .btn-easy   {background:linear-gradient(135deg,#ff6b6b,#ff8e8e);}
+        .btn-medium {background:linear-gradient(135deg,#ffa726,#ffcc02);}
+        .btn-hard   {background:linear-gradient(135deg,#ab47bc,#e1bee7);}
+        .btn-hell   {background:linear-gradient(135deg,#d32f2f,#ff6659);}
+        .btn-back   {background:linear-gradient(135deg,#26a69a,#80cbc4);}
+        /* 手机 */
+        .phone-wrapper{
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+        }
+        /* 变长的进度条 */
+        .progress-bar{
+            width:260px;
+            height:24px;
+            background:#fff;
+            border:2px solid #4caf50;
+            border-radius:12px;
+            margin:20px 0;
+            overflow:hidden;
+            position:relative;
+        }
+        .progress{
+            height:100%;
+            background:#4caf50;
+            width:0%;
+            transition:width .3s;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#fff;
+            font-size:13px;
+            font-weight:bold;
+        }
+        .phone{
+            position:relative;
+            width:160px;
+            height:320px;
+            background:#222;
+            border-radius:25px;
+            box-shadow:0 0 10px rgba(0,0,0,.5);
+            cursor:pointer;
+            user-select:none;
+        }
+        .screen-phone{
+            width:140px;
+            height:280px;
+            background:#000;
+            border-radius:15px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#fff;
+            font-size:12px;
+            margin:20px 10px;
+        }
+        .notch{
+            position:absolute;
+            top:10px;
+            left:50%;
+            transform:translateX(-50%);
+            width:60px;
+            height:8px;
+            background:#000;
+            border-radius:4px;
+        }
+        .warning{
+            position:fixed;
+            top:50%;
+            left:50%;
+            transform:translate(-50%,-50%);
+            font-size:30px;
+            font-weight:bold;
+            color:#000;
+            background:rgba(255,255,255,.9);
+            padding:15px 30px;
+            border-radius:10px;
+            display:none;
+            z-index:999;
+        }
+        .fs-btn{
+            position:absolute;
+            top:10px;
+            right:10px;
+            padding:5px 10px;
+            background:#fff;
+            color:#000;
+            border:1px solid #ccc;
+            border-radius:5px;
+            cursor:pointer;
+        }
+    </style>
+</head>
+<body>
+
+<button class="fs-btn" id="fullscreenBtn">全屏</button>
+
+<!-- 主菜单 -->
+<div id="mainMenu" class="screen">
+    <div class="white-frame">
+        <h1>偷偷玩手机游戏</h1>
+        <button class="btn btn-easy"   onclick="selectMode('easy')">简单</button>
+        <button class="btn btn-medium" onclick="selectMode('medium')">中等</button>
+        <button class="btn btn-hard"   onclick="selectMode('hard')">困难</button>
+        <button class="btn btn-hell"   onclick="selectMode('hell')">地狱模式</button>
+    </div>
+</div>
+
+<!-- 地狱模式子菜单 -->
+<div id="hellModeMenu" class="screen" style="display:none;">
+    <div class="white-frame">
+        <h2>选择地狱模式难度</h2>
+        <button class="btn btn-easy"   onclick="selectHellMode('easy')">简单地狱</button>
+        <button class="btn btn-medium" onclick="selectHellMode('medium')">普通地狱</button>
+        <button class="btn btn-hard"   onclick="selectHellMode('hard')">困难地狱</button>
+        <button class="btn btn-back"   onclick="backToMain()">返回</button>
+    </div>
+</div>
+
+<!-- 游戏界面 -->
+<div id="gameArea" class="screen" style="display:none;">
+    <div class="white-frame">
+        <h2 id="gameTitle">游戏进行中</h2>
+        <div class="phone-wrapper">
+            <div class="progress-bar">
+                <div class="progress" id="progressBar">0/0</div>
+            </div>
+            <div class="phone" id="phone">
+                <div class="notch"></div>
+                <div class="screen-phone">点击玩手机</div>
+            </div>
+        </div>
+        <button class="btn btn-back" onclick="backToMain()">返回主菜单</button>
+    </div>
+</div>
+
+<!-- 警告浮层 -->
+<div class="warning" id="warning">妈妈来了！</div>
+
+<script>
+const modeSettings = {
+    easy:   { interval:10000, max:50,  name:'简单模式' },
+    medium: { interval:8000,  max:100, name:'中等模式' },
+    hard:   { interval:5000,  max:150, name:'困难模式' }
+};
+const hellModeSettings = {
+    easy:   { max:200, name:'简单地狱模式' },
+    medium: { max:250, name:'普通地狱模式' },
+    hard:   { max:280, name:'困难地狱模式' }
+};
+
+let current = { max:0, interval:0, name:'' };
+let progress = 0;
+let checkTimer = null;
+let warningTimer = null;
+let warningOn = false;
+
+function toggleFullscreen(){
+    if(!document.fullscreenElement){
+        document.documentElement.requestFullscreen();
+        fullscreenBtn.textContent='退出全屏';
+    }else{
+        document.exitFullscreen();
+        fullscreenBtn.textContent='全屏';
+    }
+}
+fullscreenBtn.onclick=toggleFullscreen;
+
+function show(id){
+    ['mainMenu','hellModeMenu','gameArea'].forEach(el=>document.getElementById(el).style.display='none');
+    document.getElementById(id).style.display='flex';
+}
+
+function selectMode(mode){
+    if(mode==='hell') return show('hellModeMenu');
+    startGame(modeSettings[mode]);
+}
+function selectHellMode(sub){
+    startGame({interval:5000,...hellModeSettings[sub]});
+}
+function backToMain(){
+    clearAll();
+    show('mainMenu');
+    document.body.style.background='#8a2be2';
+}
+
+function startGame(cfg){
+    current=cfg;
+    progress=0;
+    show('gameArea');
+    document.getElementById('gameTitle').textContent=cfg.name;
+    updateBar();
+    scheduleCheck();
+}
+
+function clearAll(){
+    clearTimeout(checkTimer);
+    clearTimeout(warningTimer);
+    warningOn=false;
+    document.getElementById('warning').style.display='none';
+}
+
+function scheduleCheck(){
+    checkTimer=setTimeout(showWarning,current.interval);
+}
+function showWarning(){
+    warningOn=true;
+    document.getElementById('warning').style.display='block';
+    document.body.style.background='#d8bfd8';
+    warningTimer=setTimeout(hideWarning,1000);
+}
+function hideWarning(){
+    warningOn=false;
+    document.getElementById('warning').style.display='none';
+    document.body.style.background='#8a2be2';
+    scheduleCheck();
+}
+
+function updateBar(){
+    const p=Math.floor((progress/current.max)*100);
+    const bar=document.getElementById('progressBar');
+    bar.style.width=p+'%';
+    bar.textContent=progress+'/'+current.max;
+    if(progress>=current.max){
+        alert('恭喜你赢了！');
+        backToMain();
+    }
+}
+
+document.getElementById('phone').addEventListener('click',()=>{
+    if(warningOn){
+        alert('被妈妈发现了！游戏失败！');
+        backToMain();
+    }else{
+        progress++;
+        updateBar();
+    }
+});
+</script>
+</body>
+</html>
