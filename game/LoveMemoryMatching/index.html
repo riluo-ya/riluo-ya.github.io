@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>爱情记忆配对</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #ffeef8 0%, #ffe0f0 100%);
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        .card {
+            aspect-ratio: 3/4;
+            perspective: 1000px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .card:hover:not(.flipped):not(.matched) {
+            transform: scale(1.05);
+        }
+        
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            box-shadow: 0 4px 8px rgba(236, 72, 153, 0.2);
+        }
+        
+        .card-front {
+            background: linear-gradient(135deg, #fce7f3 0%, #fbb6ce 100%);
+            border: 2px solid #f9a8d4;
+        }
+        
+        .card-back {
+            background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+            border: 2px solid #c084fc;
+            transform: rotateY(180deg);
+        }
+        
+        .card.matched {
+            animation: matchSuccess 0.6s ease-in-out;
+        }
+        
+        @keyframes matchSuccess {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .card.wrong {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .heart {
+            color: #ec4899;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .modal {
+            backdrop-filter: blur(5px);
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #ec4899;
+            animation: fall 3s linear infinite;
+        }
+        
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-2xl w-full">
+        <div class="text-center mb-6">
+            <h1 class="text-4xl font-bold text-pink-600 mb-2">爱情记忆配对</h1>
+            <p class="text-purple-600">寻找属于你的浪漫记忆</p>
+        </div>
+        
+        <div class="bg-white/50 backdrop-blur-sm rounded-2xl p-4 mb-4">
+            <div class="flex justify-between items-center text-sm sm:text-base">
+                <div class="text-pink-600 font-semibold">
+                    <span id="pairs">0</span> / <span id="total">8</span> 配对成功
+                </div>
+                <div class="text-purple-600">
+                    ⏱️ <span id="timer">00:00</span>
+                </div>
+                <div class="text-pink-600">
+                    👣 步数: <span id="moves">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="gameBoard" class="grid grid-cols-4 gap-2 sm:gap-4 max-w-md mx-auto">
+            <!-- 卡牌将通过JavaScript生成 -->
+        </div>
+        
+        <div class="text-center mt-6">
+            <button onclick="initGame()" class="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-3 rounded-full font-semibold hover:from-pink-600 hover:to-purple-600 transition-all duration-300 shadow-lg">
+                开始新游戏
+            </button>
+        </div>
+    </div>
+    
+    <!-- 游戏结束弹窗 -->
+    <div id="gameModal" class="modal fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 text-center">
+            <div class="text-6xl mb-4">💕</div>
+            <h2 class="text-2xl font-bold text-pink-600 mb-2">恭喜完成！</h2>
+            <p class="text-purple-600 mb-4">你成功找到了所有浪漫记忆</p>
+            <div class="space-y-2 mb-6">
+                <p class="text-sm text-gray-600">用时: <span id="finalTime" class="font-semibold"></span></p>
+                <p class="text-sm text-gray-600">步数: <span id="finalMoves" class="font-semibold"></span></p>
+            </div>
+            <button onclick="closeModal(); initGame();" class="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-2 rounded-full font-semibold hover:from-pink-600 hover:to-purple-600 transition-all">
+                再来一局
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const symbols = ['💝', '💕', '💖', '💗', '💓', '💞', '💘', '🌹', '💝', '💕', '💖', '💗', '💓', '💞', '💘', '🌹'];
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let moves = 0;
+        let timer = 0;
+        let timerInterval = null;
+
+        function shuffle(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        function createCard(symbol, index) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.symbol = symbol;
+            card.dataset.index = index;
+            card.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-front">
+                        <span class="heart">❤️</span>
+                    </div>
+                    <div class="card-back">
+                        <span>${symbol}</span>
+                    </div>
+                </div>
+            `;
+            card.addEventListener('click', () => flipCard(card));
+            return card;
+        }
+
+        function flipCard(card) {
+            if (card.classList.contains('flipped') || 
+                card.classList.contains('matched') || 
+                flippedCards.length === 2) {
+                return;
+            }
+
+            card.classList.add('flipped');
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) {
+                moves++;
+                updateMoves();
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+            const match = card1.dataset.symbol === card2.dataset.symbol;
+
+            if (match) {
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                matchedPairs++;
+                updatePairs();
+                
+                if (matchedPairs === symbols.length / 2) {
+                    endGame();
+                }
+            } else {
+                card1.classList.add('wrong');
+                card2.classList.add('wrong');
+                setTimeout(() => {
+                    card1.classList.remove('flipped', 'wrong');
+                    card2.classList.remove('flipped', 'wrong');
+                }, 1000);
+            }
+
+            flippedCards = [];
+        }
+
+        function updatePairs() {
+            document.getElementById('pairs').textContent = matchedPairs;
+        }
+
+        function updateMoves() {
+            document.getElementById('moves').textContent = moves;
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timer++;
+                const minutes = Math.floor(timer / 60).toString().padStart(2, '0');
+                const seconds = (timer % 60).toString().padStart(2, '0');
+                document.getElementById('timer').textContent = `${minutes}:${seconds}`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function endGame() {
+            stopTimer();
+            document.getElementById('finalTime').textContent = document.getElementById('timer').textContent;
+            document.getElementById('finalMoves').textContent = moves;
+            setTimeout(() => {
+                document.getElementById('gameModal').classList.remove('hidden');
+                createConfetti();
+            }, 500);
+        }
+
+        function closeModal() {
+            document.getElementById('gameModal').classList.add('hidden');
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                confetti.style.backgroundColor = ['#ec4899', '#a855f7', '#f472b6', '#c084fc'][Math.floor(Math.random() * 4)];
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+
+        function initGame() {
+            const gameBoard = document.getElementById('gameBoard');
+            gameBoard.innerHTML = '';
+            
+            cards = shuffle(symbols);
+            matchedPairs = 0;
+            moves = 0;
+            timer = 0;
+            flippedCards = [];
+            
+            updatePairs();
+            updateMoves();
+            document.getElementById('timer').textContent = '00:00';
+            document.getElementById('total').textContent = symbols.length / 2;
+            
+            stopTimer();
+            startTimer();
+            
+            cards.forEach((symbol, index) => {
+                const card = createCard(symbol, index);
+                gameBoard.appendChild(card);
+            });
+        }
+
+        // 初始化游戏
+        initGame();
+    </script>
+</body>
+</html>
