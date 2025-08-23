@@ -57,6 +57,13 @@
     <div class="stat"><span>胸甲:</span><span id="chest">无</span></div>
     <div class="stat"><span>护腿:</span><span id="legs">无</span></div>
     <div class="stat"><span>靴子:</span><span id="boots">无</span></div>
+
+    <hr>
+    <h3>当前敌人</h3>
+    <div class="stat"><span>名称:</span><span id="eName">-</span></div>
+    <div class="stat"><span>生命:</span><span id="eHp">-</span></div>
+    <div class="stat"><span>攻击:</span><span id="eAtk">-</span></div>
+    <div class="stat"><span>金币:</span><span id="eGold">-</span></div>
     </div>
 
     <div class="panel">
@@ -67,7 +74,35 @@
 </div>
 
 <script>
-/* ========= 配置 ========= */
+const extraWeapons = [
+    {name:"秘银长枪",cost:150,atk:6,crit:15,eff:"攻击+6, 暴击+15%"},
+    {name:"暗影之刃",cost:200,atk:7,steal:.25,eff:"攻击+7, 吸血25%"},
+    {name:"雷霆之锤",cost:180,atk:5,lightning:8,eff:"攻击+5, 附加8闪电伤"},
+    {name:"圣光权杖",atk:10,light:12,boss:true,eff:"攻击+10, 附加12光伤"}
+];
+const extraHelmet = [
+    {name:"秘银头盔",cost:120,def:7,eff:"防御+7"},
+    {name:"龙鳞头盔",cost:200,def:10,eva:5,eff:"防御+10, 闪避+5%"}
+];
+const extraChest = [
+    {name:"秘银胸甲",cost:160,def:9,eff:"防御+9"},
+    {name:"龙鳞胸甲",cost:260,def:14,hp:20,eff:"防御+14, 生命上限+20"}
+];
+const extraLegs = [
+    {name:"秘银护腿",cost:140,def:6,eva:3,eff:"防御+6, 闪避+3%"},
+    {name:"龙鳞护腿",cost:220,def:11,eff:"防御+11"}
+];
+const extraBoots = [
+    {name:"秘银靴",cost:90,def:4,eva:6,eff:"防御+4, 闪避+6%"},
+    {name:"龙鳞靴",cost:150,def:7,eva:8,eff:"防御+7, 闪避+8%"}
+];
+const extraMonsters = [
+    "哥布林弩手","食尸鬼","堕天使","混沌魔犬","钢铁巨像","虚空行者","深渊女巫","血月狼人","骸骨巨龙","恶念聚合体"
+];
+const extraBosses = [
+    "地狱三头犬","星界吞噬者","腐化圣灵","末日机甲","虚空之眼","混沌之源"
+];
+
 const cfg = {
     baseHp:100, baseAtk:10, baseDef:0,
     healCost:25, atkCost:40, defCost:35,
@@ -76,33 +111,40 @@ const cfg = {
         {name:"生锈铁剑",cost:30,atk:2,eff:"攻击+2"},
         {name:"火焰法杖",cost:60,atk:3,fire:5,eff:"攻击+3, 附加5火伤"},
         {name:"吸血匕首",cost:100,atk:4,steal:.2,eff:"攻击+4, 吸血20%"},
-        {name:"炎龙之牙",atk:8,fire:10,boss:true,eff:"攻击+8, 附加10火伤"}
+        {name:"炎龙之牙",atk:8,fire:10,boss:true,eff:"攻击+8, 附加10火伤"},
+        ...extraWeapons
     ],
     armors:{
         helmet:[
             {name:"皮头盔",cost:30,def:2,eff:"防御+2"},
-            {name:"铁头盔",cost:60,def:4,eff:"防御+4"}
+            {name:"铁头盔",cost:60,def:4,eff:"防御+4"},
+            ...extraHelmet
         ],
         chest:[
             {name:"皮胸甲",cost:40,def:3,eff:"防御+3"},
-            {name:"铁胸甲",cost:80,def:6,eff:"防御+6"}
+            {name:"铁胸甲",cost:80,def:6,eff:"防御+6"},
+            ...extraChest
         ],
         legs:[
             {name:"皮护腿",cost:35,def:2,eff:"防御+2"},
-            {name:"铁护腿",cost:70,def:4,eff:"防御+4"}
+            {name:"铁护腿",cost:70,def:4,eff:"防御+4"},
+            ...extraLegs
         ],
         boots:[
             {name:"皮靴",cost:20,def:1,eva:2,eff:"防御+1, 闪避+2%"},
-            {name:"铁靴",cost:40,def:2,eva:4,eff:"防御+2, 闪避+4%"}
+            {name:"铁靴",cost:40,def:2,eva:4,eff:"防御+2, 闪避+4%"},
+            ...extraBoots
         ]
     },
     monsters:[
         "哥布林","史莱姆","骷髅","巨蛛","兽人","幽灵","牛头怪","美杜莎",
-        "穴居人","血蝙蝠","暗影犬","瘟疫鼠","岩石傀儡","狂躁狼","深渊触手","巫妖学徒"
+        "穴居人","血蝙蝠","暗影犬","瘟疫鼠","岩石傀儡","狂躁狼","深渊触手","巫妖学徒",
+        ...extraMonsters
     ],
     bosses:[
         "火焰领主","冰霜女王","暗影刺客","雷霆之王","深渊恶魔",
-        "腐化古树","虚空吞噬者","剧毒九头蛇","机械泰坦","噬魂魔龙"
+        "腐化古树","虚空吞噬者","剧毒九头蛇","机械泰坦","噬魂魔龙",
+        ...extraBosses
     ],
     exclusiveShopItems:[
         {name:"再生指环",cost:150,effect:"regen",value:5,eff:"每回合恢复5生命"},
@@ -116,22 +158,20 @@ const cfg = {
     ]
 };
 
-/* ========= 状态 ========= */
 let st={
     floor:1,hp:cfg.baseHp,maxHp:cfg.baseHp,atk:cfg.baseAtk,def:cfg.baseDef,gold:0,
     weapon:null,helmet:null,chest:null,legs:null,boots:null,
     fire:0,steal:0,eva:0,regen:0,goldFind:0,
     enemy:null,
-    exploredThisFloor:false
+    exploredThisFloor:false,
+    shopCache:null
 };
 
-/* ========= 存档 ========= */
 const SAVE_KEY='rogue_save';
 const save=()=>localStorage.setItem(SAVE_KEY,JSON.stringify(st));
 const load=()=>JSON.parse(localStorage.getItem(SAVE_KEY));
 const clearSave=()=>{localStorage.removeItem(SAVE_KEY);location.reload();};
 
-/* ========= 工具 ========= */
 const $=id=>document.getElementById(id);
 const log=(t,c='')=>{
     const d=document.createElement('div');
@@ -139,12 +179,11 @@ const log=(t,c='')=>{
     if(c)d.className=c;
     $('log').appendChild(d);
     $('log').scrollTop=1e9;
-    save(); // 每次日志更新后保存
+    save();
 };
 const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
 const chance=p=>Math.random()<p;
 
-/* ========= UI ========= */
 const render=()=>{
     $('floor').textContent=st.floor;
     $('hp').textContent=`${st.hp}/${st.maxHp}`;
@@ -152,6 +191,18 @@ const render=()=>{
     $('def').textContent=st.def;
     $('gold').textContent=st.gold;
     ['weapon','helmet','chest','legs','boots'].forEach(x=>$(x).textContent=st[x]?st[x].name:'无');
+
+    if(st.enemy){
+        $('eName').textContent = st.enemy.name;
+        $('eHp').textContent   = `${st.enemy.hp}/${st.enemy.maxHp}`;
+        $('eAtk').textContent  = st.enemy.atk;
+        $('eGold').textContent = st.enemy.gold;
+    }else{
+        $('eName').textContent = '-';
+        $('eHp').textContent   = '-';
+        $('eAtk').textContent  = '-';
+        $('eGold').textContent = '-';
+    }
 };
 const clearBtns=()=>{$('actions').innerHTML='';$('actions').style.display='flex';}
 const btn=(txt,fn,dis,tip)=>{
@@ -161,7 +212,6 @@ const btn=(txt,fn,dis,tip)=>{
     $('actions').appendChild(b);return b;
 }
 
-/* ========= 战斗 ========= */
 const genEnemy=()=>{
     const boss=st.floor%cfg.bossEvery===0;
     let hp=rnd(10+st.floor*5,10+st.floor*10);
@@ -213,12 +263,15 @@ const playerAtk=()=>{
         }
         log(`击败 ${st.enemy.name}！+${gold}金`,'gold');
         st.floor++;st.exploredThisFloor=false;
+        st.shopCache=null;
+        /* ===== 战斗结束后清空敌人面板 ===== */
+        st.enemy=null;
         render();
         setTimeout(nextRoom,800);
     }else{setTimeout(enemyTurn,600);}
+    render();
 }
 
-/* ========= 房间 ========= */
 const nextRoom=()=>{
     clearBtns();
     log(`第${st.floor}层`);
@@ -239,7 +292,8 @@ const nextRoom=()=>{
             else if(r===3){st.atk+=1;log('力量符文 +1攻','green');}
             else{st.def+=1;log('盾牌 +1防','green');}
         }
-        render();setTimeout(nextRoom,600);
+        render();
+        setTimeout(nextRoom,600);
     },st.exploredThisFloor);
     btn('商店',shop);
 }
@@ -250,12 +304,35 @@ const battle=()=>{
     btn('自动战斗',autoBattle,st.hp<=0);
 }
 
-/* ========= 商店 ========= */
+const buildShopList=()=>{
+    if(st.shopCache) return st.shopCache;
+    const tier=st.floor>=21?2:st.floor>=11?1:0;
+    const list=[];
+    cfg.weapons.filter(w=>!w.boss&&tier>=cfg.weapons.indexOf(w)/(cfg.weapons.length-1))
+               .forEach(w=>list.push({type:'weapon',item:w}));
+    ['helmet','chest','legs','boots'].forEach(type=>{
+        cfg.armors[type].filter(a=>tier>=cfg.armors[type].indexOf(a)/(cfg.armors[type].length-1))
+                        .forEach(a=>list.push({type,item:a}));
+    });
+    cfg.exclusiveShopItems.forEach(it=>list.push({type:'exclusive',item:it}));
+    const upg=[
+        {name:'+30 生命',cost:cfg.healCost,eff:'回复30生命',fn:()=>{st.hp=Math.min(st.hp+30,st.maxHp);log('恢复 30 生命','green');}},
+        {name:'+1 攻击',cost:cfg.atkCost,eff:'攻击永久+1',fn:()=>{st.atk++;log('攻击+1','green');}},
+        {name:'+1 防御',cost:cfg.defCost,eff:'防御永久+1',fn:()=>{st.def++;log('防御+1','green');}}
+    ];
+    upg.forEach(u=>list.push({type:'potion',item:u}));
+    for(let i=list.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [list[i],list[j]]=[list[j],list[i]];
+    }
+    st.shopCache = list;
+    return list;
+}
 const shopCard=(item,buyFn,disabled,tip)=>{
     const d=document.createElement('div');
     d.className='shop-card';
     d.innerHTML=`<b>${item.name}</b><br><small>${item.eff}</small><br><span class="gold">${item.cost} 金</span>`;
-    d.onclick=disabled?null:buyFn;
+    d.onclick=disabled?null:()=>{buyFn();render();};
     d.classList.toggle('disabled',disabled);
     d.title=tip||'';
     $('actions').appendChild(d);
@@ -266,41 +343,30 @@ const shop=()=>{
     $('actions').style.gridTemplateColumns='repeat(auto-fill,minmax(160px,1fr))';
     $('actions').style.gap='8px';
     log('—— 商店 ——','gold');
-    const tier=st.floor>=21?2:st.floor>=11?1:0;
-
-    /* 武器 */
-    cfg.weapons.filter(w=>!w.boss&&tier>=cfg.weapons.indexOf(w)/(cfg.weapons.length-1))
-               .forEach(w=>shopCard(w,()=>{st.gold-=w.cost;st.atk+=w.atk;st.fire+=w.fire||0;st.weapon=w;log('购买成功');shop();},st.gold<w.cost,'金币不足'));
-
-    /* 防具 */
-    ['helmet','chest','legs','boots'].forEach(type=>{
-        cfg.armors[type].filter(a=>tier>=cfg.armors[type].indexOf(a)/(cfg.armors[type].length-1))
-                        .forEach(a=>shopCard(a,()=>{st.gold-=a.cost;st.def+=a.def;st[type]=a;log('购买成功');shop();},st.gold<a.cost,'金币不足'));
+    const list = buildShopList();
+    list.forEach(({type,item})=>{
+        if(type==='weapon'){
+            shopCard(item,()=>{st.gold-=item.cost;st.atk+=item.atk;st.fire+=item.fire||0;st.weapon=item;log('购买成功');shop();},st.gold<item.cost,'金币不足');
+        }else if(['helmet','chest','legs','boots'].includes(type)){
+            shopCard(item,()=>{st.gold-=item.cost;st.def+=item.def;st[type]=item;log('购买成功');shop();},st.gold<item.cost,'金币不足');
+        }else if(type==='exclusive'){
+            shopCard(item,()=>{
+                st.gold-=item.cost;
+                if(item.effect==='regen')st.regen+=item.value;
+                if(item.effect==='goldFind')st.goldFind+=item.value;
+                if(item.effect==='eva')st.eva+=item.value;
+                log(`购买了 ${item.name}`,'green');shop();
+            },st.gold<item.cost,'金币不足');
+        }else if(type==='potion'){
+            shopCard(item,()=>{st.gold-=item.cost;item.fn();shop();},st.gold<item.cost||(item.name.includes('生命')&&st.hp>=st.maxHp),st.gold<item.cost?'金币不足':item.name.includes('生命')&&st.hp>=st.maxHp?'生命已满':'');
+        }
     });
-
-    /* 独家道具 */
-    cfg.exclusiveShopItems.forEach(it=>shopCard(it,()=>{
-        st.gold-=it.cost;
-        if(it.effect==='regen')st.regen+=it.value;
-        if(it.effect==='goldFind')st.goldFind+=it.value;
-        if(it.effect==='eva')st.eva+=it.value;
-        log(`购买了 ${it.name}`,'green');shop();
-    },st.gold<it.cost,'金币不足'));
-
-    /* 升级药水 */
-    const upg=[
-        {name:'+30 生命',cost:cfg.healCost,eff:'回复30生命',fn:()=>{st.hp=Math.min(st.hp+30,st.maxHp);log('恢复 30 生命','green');}},
-        {name:'+1 攻击',cost:cfg.atkCost,eff:'攻击永久+1',fn:()=>{st.atk++;log('攻击+1','green');}},
-        {name:'+1 防御',cost:cfg.defCost,eff:'防御永久+1',fn:()=>{st.def++;log('防御+1','green');}}
-    ];
-    upg.forEach(u=>shopCard(u,()=>{st.gold-=u.cost;u.fn();shop();},st.gold<u.cost||(u.name.includes('生命')&&st.hp>=st.maxHp),st.gold<u.cost?'金币不足':u.name.includes('生命')&&st.hp>=st.maxHp?'生命已满':''));
     const leave=document.createElement('button');
     leave.textContent='离开商店';
     leave.onclick=nextRoom;
     $('actions').appendChild(leave);
 };
 
-/* ========= 自动战斗 ========= */
 const autoBattle=()=>{
     const loop=()=>{
         if(st.hp<=0||!st.enemy||st.enemy.hp<=0)return;
@@ -314,7 +380,6 @@ const autoBattle=()=>{
     loop();
 };
 
-/* ========= 启动 ========= */
 const initGame=()=>{
     const loaded=load();
     if(loaded){
@@ -330,13 +395,14 @@ const startGame=()=>{
     $('log').innerHTML='';
     st={floor:1,hp:cfg.baseHp,maxHp:cfg.baseHp,atk:cfg.baseAtk,def:cfg.baseDef,gold:0,
         weapon:null,helmet:null,chest:null,legs:null,boots:null,
-        fire:0,steal:0,eva:0,regen:0,goldFind:0,enemy:null,exploredThisFloor:false};
+        fire:0,steal:0,eva:0,regen:0,goldFind:0,enemy:null,exploredThisFloor:false,
+        shopCache:null
+    };
     render();
     log('欢迎来到地下城！');
     nextRoom();
 };
 
-// 添加删除存档按钮
 document.addEventListener('keydown',(e)=>{
     if(e.ctrlKey && e.key==='d'){
         if(confirm('确定删除存档并重新开始吗？')){
