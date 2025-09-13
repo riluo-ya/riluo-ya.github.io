@@ -1,4 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
+# 修复 dpkg 中断状态
+dpkg --configure -a
 
 # 定义颜色与格式变量（确保Termux兼容）
 RED="\033[1;31m"       # 鲜艳红色（加粗）
@@ -60,10 +62,8 @@ main() {
     title "$YELLOW" "Phira多人联机一键安装脚本"
     info "$CYAN" "即将自动安装依赖并构建服务，过程中请保持网络畅通~"
     echo
-    # 添加作者信息
     info "$PURPLE" "作者: 日落-ya"
     echo
-    # 等待三秒
     info "$YELLOW" "3秒后继续执行..."
     sleep 3
     echo
@@ -71,9 +71,9 @@ main() {
     # 步骤1：更新软件包
     title "$BLUE" "步骤1/6：更新软件包列表"
     sleep 1
-    info "$YELLOW" "正在更新系统软件包..."
+    info "$YELLOW" "正在更新软件包..."
     pkg update -y || error "软件包更新失败"
-    success "软件包列表更新完成"
+    success "更新软件包完成"
     echo
 
     # 步骤2：安装依赖工具
@@ -134,15 +134,17 @@ main() {
     success "程序构建完成"
     echo
 
-    # 步骤6：配置启动提示
+    # 步骤6：配置启动提示（HereDoc 修复空写入）
     title "$BLUE" "步骤6/6：配置启动交互"
     sleep 1
     info "$YELLOW" "设置启动提示与自动执行逻辑..."
     sleep 1
 
-    # 定义启动提示与交互脚本（写入.bashrc）
-start_script='
-#Phira-mp启动
+    # 使用 HereDoc 写入 .bashrc
+    if ! grep -q "phira-mp启动提示" ~/.bashrc; then
+        cat >> ~/.bashrc << 'EOF'
+
+# phira-mp启动提示
 echo -e "\e[36m┌-----------------------------------------------------\e[0m"
 echo -e "\e[1;32m|          Phira 多人联机启动器\e[0m"
 echo -e "\e[33m|        按 [回车] 启动服务  (Ctrl+C 退出)\e[0m"
@@ -166,11 +168,7 @@ sleep 1
         esac
     done
 }
-'
-
-    # 避免重复添加
-    if ! grep -q "phira-mp启动提示" ~/.bashrc; then
-        echo -e "$start_script" >> ~/.bashrc
+EOF
         success "启动交互已配置，下次打开Termux将显示启动提示"
     else
         warning "启动交互已存在，无需重复配置"
