@@ -196,7 +196,7 @@
     <script>
         // 复制命令功能
         document.getElementById('copyBtn').addEventListener('click', function() {
-            const command = 'curl -LO riluo-ya.github.io/sh/install.sh && bash install.sh';
+            const command = 'curl -LO riluo-ya.github.io/sh/phiramp/install.sh && bash install.sh';
             navigator.clipboard.writeText(command).then(() => {
                 const copySuccess = document.getElementById('copySuccess');
                 copySuccess.classList.remove('hidden');
