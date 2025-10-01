@@ -67,6 +67,16 @@ main() {
     info "$YELLOW" "3秒后继续执行..."
     sleep 3
     echo
+    
+   # ===== 新增：若已存在 phira-mp 目录则删除 =====
+    if [ -d "phira-mp" ]; then
+        info "$YELLOW" "检测到已存在 phira-mp 目录，正在删除..."
+        rm -rf phira-mp || error "无法删除旧目录 phira-mp"
+        success "旧目录已清理"
+        echo
+    fi
+    # ============================================
+
 
     # 步骤1：更新软件包
     title "$BLUE" "步骤1/6：更新软件包列表"
