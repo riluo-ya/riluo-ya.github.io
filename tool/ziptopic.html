@@ -210,86 +210,47 @@
     </div>
 
     <script>
-        let imageFile = null;
-        let zipFile = null;
+processButton.addEventListener('click', function () {
+    if (!imageFile || !zipFile) return;
 
-        const imageInput = document.getElementById('imageInput');
-        const zipInput = document.getElementById('zipInput');
-        const imageName = document.getElementById('imageName');
-        const zipName = document.getElementById('zipName');
-        const previewImage = document.getElementById('previewImage');
-        const processButton = document.getElementById('processButton');
-        const downloadSection = document.getElementById('downloadSection');
-        const downloadLink = document.getElementById('downloadLink');
+    processButton.textContent = '处理中...';
+    processButton.disabled = true;
+    downloadSection.style.display = 'none';
 
-        imageInput.addEventListener('change', function(e) {
-            imageFile = e.target.files[0];
-            if (imageFile) {
-                imageName.textContent = imageFile.name;
-                
-                // 显示预览
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    previewImage.src = e.target.result;
-                    previewImage.style.display = 'block';
-                };
-                reader.readAsDataURL(imageFile);
-                
-                checkFiles();
-            }
-        });
+    const reader = new FileReader();
 
-        zipInput.addEventListener('change', function(e) {
-            zipFile = e.target.files[0];
-            if (zipFile) {
-                zipName.textContent = zipFile.name;
-                checkFiles();
-            }
-        });
+    // 先读图片
+    reader.onload = function (e) {
+        const imageData = new Uint8Array(e.target.result);
 
-        function checkFiles() {
-            if (imageFile && zipFile) {
-                processButton.disabled = false;
-            }
-        }
+        const reader2 = new FileReader();
+        // 再读压缩包
+        reader2.onload = function (e2) {
+            const zipData = new Uint8Array(e2.target.result);
 
-        processButton.addEventListener('click', async function() {
-            if (!imageFile || !zipFile) return;
+            // 合并
+            const merged = new Uint8Array(imageData.length + zipData.length);
+            merged.set(imageData, 0);
+            merged.set(zipData, imageData.length);
 
-            processButton.textContent = '处理中...';
-            processButton.disabled = true;
+            const blob = new Blob([merged], { type: 'image/jpeg' });
+            const url = URL.createObjectURL(blob);
+            downloadLink.href = url;
+            downloadSection.style.display = 'block';
 
-            try {
-                // 读取图片文件
-                const imageBuffer = await imageFile.arrayBuffer();
-                
-                // 读取压缩包文件
-                const zipBuffer = await zipFile.arrayBuffer();
-                
-                // 合并文件
-                const combinedBuffer = new Uint8Array(imageBuffer.byteLength + zipBuffer.byteLength);
-                combinedBuffer.set(new Uint8Array(imageBuffer), 0);
-                combinedBuffer.set(new Uint8Array(zipBuffer), imageBuffer.byteLength);
-                
-                // 创建下载链接
-                const blob = new Blob([combinedBuffer], { type: 'image/jpeg' });
-                const url = URL.createObjectURL(blob);
-                
-                downloadLink.href = url;
-                downloadSection.style.display = 'block';
-                
-                processButton.textContent = '处理完成！';
-                setTimeout(() => {
-                    processButton.textContent = '开始伪装';
-                    processButton.disabled = false;
-                }, 2000);
-                
-            } catch (error) {
-                alert('处理失败：' + error.message);
-                processButton.textContent = '开始伪装';
-                processButton.disabled = false;
-            }
-        });
+            processButton.textContent = '开始伪装';
+            processButton.disabled = false;
+        };
+        reader2.readAsArrayBuffer(zipFile);
+    };
+    reader.onerror = () => {
+        alert('读取文件失败，请重新选择');
+        processButton.textContent = '开始伪装';
+        processButton.disabled = false;
+    };
+    reader.readAsArrayBuffer(imageFile);
+});
+
     </script>
 </body>
 </html>
