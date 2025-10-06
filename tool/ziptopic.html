@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>压缩包伪装工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 40px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.36);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .upload-section {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            color: rgba(255, 255, 255, 0.75);
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-button {
+            display: block;
+            width: 100%;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .file-input-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="file"] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-name {
+            margin-top: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .process-button {
+            width: 100%;
+            padding: 15px;
+            background: rgba(92, 107, 255, 0.7);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .process-button:hover:not(:disabled) {
+            background: rgba(92, 107, 255, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .process-button:disabled {
+            background: rgba(255, 255, 255, 0.15);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .download-section {
+            display: none;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .download-button {
+            display: inline-block;
+            width: 100%;
+            padding: 15px;
+            background: rgba(46, 204, 113, 0.7);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .download-button:hover {
+            background: rgba(46, 204, 113, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .info-text {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            text-align: center;
+            margin-top: 20px;
+            line-height: 1.5;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            margin-top: 15px;
+            border-radius: 10px;
+            display: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📦 压缩包伪装工具</h1>
+        
+        <div class="upload-section">
+            <label for="imageInput">选择图片文件：</label>
+            <div class="file-input-wrapper">
+                <label class="file-input-button" for="imageInput">
+                    选择图片
+                </label>
+                <input type="file" id="imageInput" accept="image/*">
+            </div>
+            <div class="file-name" id="imageName">未选择文件</div>
+            <img class="preview-image" id="previewImage" alt="预览">
+        </div>
+
+        <div class="upload-section">
+            <label for="zipInput">选择压缩包文件：</label>
+            <div class="file-input-wrapper">
+                <label class="file-input-button" for="zipInput">
+                    选择压缩包
+                </label>
+                <input type="file" id="zipInput" accept=".zip,.rar,.7z">
+            </div>
+            <div class="file-name" id="zipName">未选择文件</div>
+        </div>
+
+        <button class="process-button" id="processButton" disabled>开始伪装</button>
+
+        <div class="download-section" id="downloadSection">
+            <a class="download-button" id="downloadLink" download="disguised_image.jpg">
+                下载伪装后的图片
+            </a>
+            <p class="info-text">
+                💡 提示：下载后的图片可以正常查看，将文件后缀改为 .zip 即可解压出压缩包内容
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let imageFile = null;
+        let zipFile = null;
+
+        const imageInput = document.getElementById('imageInput');
+        const zipInput = document.getElementById('zipInput');
+        const imageName = document.getElementById('imageName');
+        const zipName = document.getElementById('zipName');
+        const previewImage = document.getElementById('previewImage');
+        const processButton = document.getElementById('processButton');
+        const downloadSection = document.getElementById('downloadSection');
+        const downloadLink = document.getElementById('downloadLink');
+
+        imageInput.addEventListener('change', function(e) {
+            imageFile = e.target.files[0];
+            if (imageFile) {
+                imageName.textContent = imageFile.name;
+                
+                // 显示预览
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewImage.style.display = 'block';
+                };
+                reader.readAsDataURL(imageFile);
+                
+                checkFiles();
+            }
+        });
+
+        zipInput.addEventListener('change', function(e) {
+            zipFile = e.target.files[0];
+            if (zipFile) {
+                zipName.textContent = zipFile.name;
+                checkFiles();
+            }
+        });
+
+        function checkFiles() {
+            if (imageFile && zipFile) {
+                processButton.disabled = false;
+            }
+        }
+
+        processButton.addEventListener('click', async function() {
+            if (!imageFile || !zipFile) return;
+
+            processButton.textContent = '处理中...';
+            processButton.disabled = true;
+
+            try {
+                // 读取图片文件
+                const imageBuffer = await imageFile.arrayBuffer();
+                
+                // 读取压缩包文件
+                const zipBuffer = await zipFile.arrayBuffer();
+                
+                // 合并文件
+                const combinedBuffer = new Uint8Array(imageBuffer.byteLength + zipBuffer.byteLength);
+                combinedBuffer.set(new Uint8Array(imageBuffer), 0);
+                combinedBuffer.set(new Uint8Array(zipBuffer), imageBuffer.byteLength);
+                
+                // 创建下载链接
+                const blob = new Blob([combinedBuffer], { type: 'image/jpeg' });
+                const url = URL.createObjectURL(blob);
+                
+                downloadLink.href = url;
+                downloadSection.style.display = 'block';
+                
+                processButton.textContent = '处理完成！';
+                setTimeout(() => {
+                    processButton.textContent = '开始伪装';
+                    processButton.disabled = false;
+                }, 2000);
+                
+            } catch (error) {
+                alert('处理失败：' + error.message);
+                processButton.textContent = '开始伪装';
+                processButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
