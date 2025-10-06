@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIP文件图片伪装工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: background 1s ease;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 30px;
+            text-align: center;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        /* 毛玻璃容器核心样式 */
+        .glass-container {
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 25px;
+        }
+
+        /* 上传区域样式 */
+        .upload-section {
+            margin-bottom: 25px;
+        }
+
+        .upload-title {
+            font-size: 16px;
+            color: #2d3748;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .upload-area {
+            width: 100%;
+            height: 160px;
+            border: 2px dashed rgba(74, 85, 104, 0.3);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        /* 新增：选中后的上传区域反馈 */
+        .upload-area.selected {
+            border-color: #2d3748;
+            background: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.1);
+        }
+
+        .upload-area:hover {
+            border-color: #2d3748;
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .upload-area.dragging {
+            border-color: #2d3748;
+            box-shadow: 0 0 0 3px rgba(74, 85, 104, 0.2);
+        }
+
+        /* -------------------------- 优化：ZIP预览样式 -------------------------- */
+        /* 预览容器：从角落调整为左下，更显眼且不遮挡文字 */
+        .preview-container {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            z-index: 2;
+        }
+
+        /* ZIP预览卡片：带背景、边框和阴影，视觉更清晰 */
+        .zip-preview-card {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(74, 85, 104, 0.2);
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        /* ZIP图标：更大更醒目 */
+        .zip-icon {
+            font-size: 20px;
+            color: #4a5568;
+        }
+
+        /* 预览文字容器：控制文字长度，避免溢出 */
+        .preview-text-container {
+            max-width: 180px; /* 限制宽度，防止换行 */
+        }
+
+        /* 预览标题：明确标注“已选中”状态 */
+        .preview-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #2d3748;
+            line-height: 1.2;
+        }
+
+        /* 预览文件名：省略号处理长文件名 */
+        .preview-filename {
+            font-size: 11px;
+            color: #718096;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+        }
+
+        /* 图片预览保持原有样式，与ZIP预览协调 */
+        .image-preview-thumb {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            border: 1px solid rgba(74, 85, 104, 0.2);
+        }
+
+        .upload-icon {
+            font-size: 42px;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            font-size: 14px;
+            color: #2d3748;
+            text-align: center;
+            padding: 0 15px;
+        }
+
+        .upload-subtext {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        /* 上传输入框（确保可点击） */
+        .upload-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 3;
+        }
+
+        /* 磨砂模糊按钮样式 */
+        .glass-btn {
+            width: 100%;
+            padding: 14px 0;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            color: #2d3748;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            outline: none;
+        }
+
+        .glass-btn:disabled {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #718096;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .glass-btn:not(:disabled):hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .glass-btn:not(:disabled):active {
+            transform: translateY(0);
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* 进度条样式 */
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--grad-color1), var(--grad-color2));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* 结果区域样式 */
+        .result-area {
+            margin-top: 25px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 12px;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .result-title {
+            font-size: 16px;
+            color: #2d3748;
+            font-weight: 500;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .preview-image {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .file-info {
+            font-size: 13px;
+            color: #4a5568;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .tips-text {
+            font-size: 12px;
+            color: #718096;
+            margin: 10px 0 15px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 6px;
+        }
+
+        /* 响应式调整：小屏幕适配预览卡片 */
+        @media (max-width: 500px) {
+            .glass-container {
+                padding: 20px;
+            }
+
+            .upload-area {
+                height: 140px;
+            }
+
+            .upload-icon {
+                font-size: 36px;
+            }
+
+            .title {
+                font-size: 24px;
+            }
+
+            /* 小屏幕缩短预览卡片宽度 */
+            .preview-text-container {
+                max-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">ZIP文件图片伪装工具</h1>
+
+    <div class="glass-container">
+        <!-- ZIP上传区域 -->
+        <div class="upload-section">
+            <div class="upload-title">1. 上传需要伪装的ZIP文件</div>
+            <div class="upload-area" id="zipUploadArea">
+                <!-- ZIP预览容器（初始隐藏） -->
+                <div class="preview-container" id="zipPreviewContainer" style="display: none;"></div>
+                <div class="upload-icon">📁</div>
+                <div class="upload-text" id="zipUploadText">拖拽ZIP文件到此处，或点击选择</div>
+                <div class="upload-subtext">支持单个ZIP文件，最大100MB</div>
+                <input type="file" class="upload-input" id="zipInput" accept=".zip,application/zip">
+            </div>
+        </div>
+
+        <!-- 图片上传区域 -->
+        <div class="upload-section">
+            <div class="upload-title">2. 上传伪装用的图片</div>
+            <div class="upload-area" id="imageUploadArea">
+                <!-- 图片预览容器（初始隐藏） -->
+                <div class="preview-container" id="imagePreviewContainer" style="display: none;">
+                    <img class="image-preview-thumb" id="imagePreviewThumb" alt="图片预览">
+                </div>
+                <div class="upload-icon">🖼️</div>
+                <div class="upload-text" id="imageUploadText">拖拽图片到此处，或点击选择</div>
+                <div class="upload-subtext">支持JPG/PNG/GIF，最大50MB</div>
+                <input type="file" class="upload-input" id="imageInput" accept="image/*">
+            </div>
+        </div>
+
+        <!-- 进度条 -->
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <!-- 开始伪装按钮（磨砂效果） -->
+        <button class="glass-btn" id="camouflageBtn" disabled>
+            <span>开始伪装</span>
+            <span>🔐</span>
+        </button>
+
+        <!-- 结果展示区域 -->
+        <div class="result-area" id="resultArea">
+            <div class="result-title">伪装完成！</div>
+            <img class="preview-image" id="finalPreviewImage" alt="伪装后图片预览">
+            <div class="file-info" id="fileInfo"></div>
+            <div class="tips-text">
+                提示：下载后将文件后缀改为.zip，即可用解压软件正常打开
+            </div>
+            <!-- 下载按钮（磨砂效果） -->
+            <button class="glass-btn" id="downloadBtn">
+                <span>下载伪装文件</span>
+                <span>↓</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量存储选中的文件
+        let selectedZipFile = null;
+        let selectedImageFile = null;
+        let camouflagedBlob = null;
+        let randomGradColors = [];
+
+        // DOM元素
+        const zipUploadArea = document.getElementById('zipUploadArea');
+        const imageUploadArea = document.getElementById('imageUploadArea');
+        const zipInput = document.getElementById('zipInput');
+        const imageInput = document.getElementById('imageInput');
+        const camouflageBtn = document.getElementById('camouflageBtn');
+        const progressBar = document.getElementById('progressBar');
+        const resultArea = document.getElementById('resultArea');
+        const finalPreviewImage = document.getElementById('finalPreviewImage');
+        const fileInfo = document.getElementById('fileInfo');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const zipUploadText = document.getElementById('zipUploadText');
+        const imageUploadText = document.getElementById('imageUploadText');
+        const zipPreviewContainer = document.getElementById('zipPreviewContainer');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const imagePreviewThumb = document.getElementById('imagePreviewThumb');
+
+        // 生成随机RGB颜色
+        function getRandomColor() {
+            const r = Math.floor(Math.random() * 80) + 120;
+            const g = Math.floor(Math.random() * 80) + 120;
+            const b = Math.floor(Math.random() * 80) + 120;
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        // 设置随机渐变背景
+        function setRandomGradient() {
+            const color1 = getRandomColor();
+            const color2 = getRandomColor();
+            const angle = Math.floor(Math.random() * 360);
+            randomGradColors = [color1, color2];
+            
+            document.body.style.background = `linear-gradient(${angle}deg, ${color1}, ${color2})`;
+            document.documentElement.style.setProperty('--grad-color1', color1);
+            document.documentElement.style.setProperty('--grad-color2', color2);
+        }
+
+        // 页面加载时设置随机渐变
+        window.addEventListener('load', setRandomGradient);
+
+        // ZIP文件选择逻辑
+        zipUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            zipUploadArea.classList.add('dragging');
+        });
+        zipUploadArea.addEventListener('dragleave', () => {
+            zipUploadArea.classList.remove('dragging');
+        });
+        zipUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zipUploadArea.classList.remove('dragging');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && (files[0].type === 'application/zip' || files[0].name.endsWith('.zip'))) {
+                handleZipSelect(files[0]);
+            } else {
+                alert('请上传有效的ZIP文件');
+            }
+        });
+        zipInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleZipSelect(e.target.files[0]);
+            }
+        });
+
+        // 图片文件选择逻辑
+        imageUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            imageUploadArea.classList.add('dragging');
+        });
+        imageUploadArea.addEventListener('dragleave', () => {
+            imageUploadArea.classList.remove('dragging');
+        });
+        imageUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            imageUploadArea.classList.remove('dragging');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                handleImageSelect(files[0]);
+            } else {
+                alert('请上传有效的图片文件');
+            }
+        });
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleImageSelect(e.target.files[0]);
+            }
+        });
+
+        // -------------------------- 关键修改：ZIP选中后预览样式 --------------------------
+        function handleZipSelect(file) {
+            if (file.size > 100 * 1024 * 1024) {
+                alert('ZIP文件过大，最大支持100MB');
+                return;
+            }
+            selectedZipFile = file;
+            
+            // 1. 上传区域添加“选中”样式（背景+边框变化）
+            zipUploadArea.classList.add('selected');
+            
+            // 2. 文字提示强化：明确“已选中”
+            zipUploadText.textContent = `✅ ZIP文件已选中`;
+            zipUploadArea.querySelector('.upload-subtext').textContent = `文件名：${file.name}（${formatFileSize(file.size)}）`;
+            
+            // 3. 生成醒目预览卡片：含图标、状态、文件名
+            zipPreviewContainer.innerHTML = `
+                <div class="zip-preview-card">
+                    <div class="zip-icon">📦</div>
+                    <div class="preview-text-container">
+                        <div class="preview-title">已选中ZIP文件</div>
+                        <div class="preview-filename">${file.name}</div>
+                    </div>
+                </div>
+            `;
+            zipPreviewContainer.style.display = 'block';
+            
+            checkBtnStatus();
+        }
+
+        // 图片选择逻辑同步优化（保持风格统一）
+        function handleImageSelect(file) {
+            if (file.size > 50 * 1024 * 1024) {
+                alert('图片文件过大，最大支持50MB');
+                return;
+            }
+            selectedImageFile = file;
+            
+            // 图片区域也添加“选中”样式
+            imageUploadArea.classList.add('selected');
+            
+            // 文字提示强化
+            imageUploadText.textContent = `✅ 图片已选中`;
+            imageUploadArea.querySelector('.upload-subtext').textContent = `文件名：${file.name}（${formatFileSize(file.size)}）`;
+            
+            // 图片预览优化：添加边框和阴影，与ZIP预览协调
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreviewThumb.src = e.target.result;
+                imagePreviewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+            
+            checkBtnStatus();
+        }
+
+        // 检查按钮状态
+        function checkBtnStatus() {
+            camouflageBtn.disabled = !(selectedZipFile && selectedImageFile);
+        }
+
+        // 进度更新
+        function updateProgress(percent, text) {
+            progressBar.style.width = `${percent}%`;
+            progressBar.setAttribute('title', text);
+        }
+
+        // 文件大小格式化
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return `${bytes} B`;
+            if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+            return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+        }
+
+        // 读取文件为ArrayBuffer
+        function readFileAsArrayBuffer(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = () => reject(new Error(`读取${file.name}失败，请重试`));
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // 核心：ZIP伪装成图片
+        function camouflageZipAsImage(zipBuffer, imageBuffer, imageType) {
+            return new Promise((resolve) => {
+                const zipUint8 = new Uint8Array(zipBuffer);
+                const imageUint8 = new Uint8Array(imageBuffer);
+                const combinedUint8 = new Uint8Array(imageUint8.length + zipUint8.length);
+                combinedUint8.set(imageUint8, 0);
+                combinedUint8.set(zipUint8, imageUint8.length);
+                const blob = new Blob([combinedUint8], { type: imageType });
+                resolve(blob);
+            });
+        }
+
+        // 显示结果
+        function showResult() {
+            const previewUrl = URL.createObjectURL(camouflagedBlob);
+            finalPreviewImage.src = previewUrl;
+            finalPreviewImage.onload = () => {
+                URL.revokeObjectURL(previewUrl);
+            };
+            
+            fileInfo.innerHTML = `
+                <p>原ZIP文件：${selectedZipFile.name}（${formatFileSize(selectedZipFile.size)}）</p>
+                <p>原图片文件：${selectedImageFile.name}（${formatFileSize(selectedImageFile.size)}）</p>
+                <p>伪装后文件：${formatFileSize(camouflagedBlob.size)}</p>
+            `;
+            resultArea.style.display = 'block';
+        }
+
+        // 下载逻辑
+        downloadBtn.addEventListener('click', () => {
+            if (!camouflagedBlob) {
+                alert('无伪装文件可下载，请先完成伪装');
+                return;
+            }
+
+            try {
+                const downloadUrl = URL.createObjectURL(camouflagedBlob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                const imageName = selectedImageFile.name;
+                const imageExt = imageName.split('.').pop() || 'jpg';
+                a.download = `伪装文件.${imageExt}`;
+                a.style.display = 'block';
+                a.style.position = 'absolute';
+                a.style.left = '-9999px';
+                document.body.appendChild(a);
+
+                const clickEvent = new MouseEvent('click', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window
+                });
+                a.dispatchEvent(clickEvent);
+
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(downloadUrl);
+                }, 1000);
+            } catch (error) {
+                alert(`下载失败：${error.message}`);
+            }
+        });
+
+        // 开始伪装
+        camouflageBtn.addEventListener('click', async () => {
+            try {
+                updateProgress(10, '读取ZIP文件...');
+                const zipBuffer = await readFileAsArrayBuffer(selectedZipFile);
+                
+                updateProgress(40, '读取图片文件...');
+                const imageBuffer = await readFileAsArrayBuffer(selectedImageFile);
+                
+                updateProgress(70, '正在合并文件...');
+                camouflagedBlob = await camouflageZipAsImage(zipBuffer, imageBuffer, selectedImageFile.type);
+                
+                updateProgress(100, '伪装完成！');
+                showResult();
+            } catch (error) {
+                alert(`处理失败：${error.message}`);
+                updateProgress(0, '处理失败');
+            }
+        });
+    </script>
+</body>
+</html>
