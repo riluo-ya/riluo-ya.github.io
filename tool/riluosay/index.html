@@ -166,6 +166,23 @@ button{
     background:rgba(255,255,255,.25);
     color:var(--text);
 }
+
+/* ===== 内部通知条 ===== */
+.toast{
+    position:fixed;
+    top:20px; left:50%;
+    transform:translateX(-50%);
+    padding:12px 24px;
+    background:var(--accent);
+    color:#fff;
+    font-size:14px;
+    border-radius:12px;
+    box-shadow:0 4px 14px rgba(0,0,0,.15);
+    z-index:9999;
+    opacity:0;
+    transition:opacity .3s;
+}
+.toast.show{opacity:1;}
 </style>
 </head>
 <body>
@@ -206,12 +223,32 @@ button{
     </div>
 </div>
 
+<!-- 通知条容器 -->
+<div id="toastContainer"></div>
+
 <script>
 const builtin = {
     sunset: { header: '日落曰:', dict: ['日落','晚霞','日暮','夕阳'] },
     binary: { header: '11010曰:', dict: ['100','101','111'] }
 };
 
+/* ------------- 统一内部通知 ------------- */
+function toast(msg){
+    const box = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    box.appendChild(t);
+    /* 触发动画 */
+    setTimeout(()=>t.classList.add('show'),10);
+    /* 3s后移除 */
+    setTimeout(()=>{
+        t.classList.remove('show');
+        setTimeout(()=>box.removeChild(t),300);
+    },3000);
+}
+
+/* ------------- 原逻辑 ------------- */
 function toggleCustom(){
     const box = document.getElementById('customBox');
     box.style.display = document.getElementById('modeSelect').value === 'custom' ? 'flex' : 'none';
@@ -220,19 +257,18 @@ function toggleCustom(){
 function getMode(){
     const val = document.getElementById('modeSelect').value;
     if (val !== 'custom') return builtin[val];
-    // 自定义
     const prefix = document.getElementById('customPrefix').value.trim() || '自定义';
     const w1 = document.getElementById('word1').value.trim();
     const w2 = document.getElementById('word2').value.trim();
     const w3 = document.getElementById('word3').value.trim();
-    if (!w1 || !w2 || !w3){ alert('请填写完整的三个词语'); return null; }
+    if (!w1 || !w2 || !w3){ toast('请填写完整的三个词语'); return null; }
     return { header: prefix + '曰:', dict: [w1, w2, w3] };
 }
 
 function encode(){
     const mode = getMode(); if (!mode) return;
     const txt = document.getElementById('input').value;
-    if (!txt){ alert('请输入内容'); return; }
+    if (!txt){ toast('请输入内容'); return; }
     let bits = [...new TextEncoder().encode(txt)]
                .map(b=>b.toString(2).padStart(8,'0')).join('');
     let out = mode.header;
@@ -248,11 +284,9 @@ function encode(){
 function decode(){
     const txt = document.getElementById('input').value.trim();
     let mode = null;
-    // 先匹配内置
     for (const [k, v] of Object.entries(builtin)) {
         if (txt.startsWith(v.header)){ mode = v; break; }
     }
-    // 再匹配自定义
     if (!mode && txt.includes('曰:')){
         const prefix = txt.split('曰:')[0] + '曰:';
         const w1 = document.getElementById('word1').value.trim();
@@ -260,7 +294,7 @@ function decode(){
         const w3 = document.getElementById('word3').value.trim();
         if (w1 && w2 && w3) mode = { header: prefix, dict: [w1, w2, w3] };
     }
-    if (!mode){ alert('格式错误：无法识别加密格式'); return; }
+    if (!mode){ toast('格式错误：无法识别加密格式'); return; }
 
     const body = txt.slice(mode.header.length);
     const rev = {}; mode.dict.forEach((w, i) => rev[w] = i);
@@ -269,7 +303,7 @@ function decode(){
     let bits = '';
     for (let i = 0; i < body.length; i += wordLen) {
         const key = body.substr(i, wordLen);
-        if (!(key in rev)){ alert('非法字符：' + key); return; }
+        if (!(key in rev)){ toast('非法字符：' + key); return; }
         bits += rev[key].toString(2).padStart(bitPerWord, '0');
     }
     const bytes = [];
@@ -279,7 +313,7 @@ function decode(){
     try {
         const plain = new TextDecoder().decode(new Uint8Array(bytes));
         show(plain);
-    } catch (e) { alert('解密失败'); }
+    } catch (e) { toast('解密失败'); }
 }
 
 function show(str){
