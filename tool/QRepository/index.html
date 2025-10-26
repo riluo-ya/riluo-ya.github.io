@@ -470,7 +470,10 @@
             <label for="qrLinkSelect">嵌入二维码链接：</label>
             <select id="qrLinkSelect" class="glass-effect">
                 <option value="https://riluo-ya.github.io/tool/QRepository/">Github 页面</option>
+                <option value="http://i9n.cn/n5yoL">短链接</option>
+                <option value="custom">自定义</option>
             </select>
+            <input type="text" id="customLinkInput" placeholder="请输入自定义链接" class="glass-effect" style="display:none; margin-top:0.5rem;" />
         </div>
 
         <div class="form-group">
@@ -561,6 +564,16 @@
         document.getElementById("convertToJpg").addEventListener("change", function () {
             document.getElementById("jpgQualityContainer").style.display =
                 this.checked ? "block" : "none";
+        });
+
+        // 新增：二维码链接选择事件，当选择“自定义”时显示自定义输入框
+        document.getElementById("qrLinkSelect").addEventListener("change", function() {
+            const customInput = document.getElementById("customLinkInput");
+            if (this.value === "custom") {
+                customInput.style.display = "block";
+            } else {
+                customInput.style.display = "none";
+            }
         });
 
         document.getElementById("generateButton").onclick = async function () {
@@ -939,7 +952,16 @@
                 canvas.width = qrSize;
                 canvas.height = qrSize;
 
-                const selectedURL = document.getElementById("qrLinkSelect").value;
+                // 获取用户选择的链接，如果选择自定义则使用自定义输入框的值
+                const selectedURL = (() => {
+                    const select = document.getElementById("qrLinkSelect");
+                    if (select.value === "custom") {
+                        const customInput = document.getElementById("customLinkInput");
+                        return customInput.value.trim() || "https://riluo-ya.github.io/tool/QRepository/";
+                    }
+                    return select.value;
+                })();
+
                 await new Promise((resolve, reject) => {
                     QRCode.toCanvas(
                         canvas,
@@ -1591,7 +1613,8 @@ self.onmessage = async (e) => {
                                 splitBtn.onclick = async () => {
                                     const batch = 10;
                                     for (let i = 0; i < names.length; i += batch) {
-                                        const slice = names.slice(i, i + batch);
+                                        const slice
+                                        = names.slice(i, i + batch);
                                         setProgress("decode", 96, `逐个下载… (${Math.min(i + batch, names.length)}/${names.length})`);
                                         for (const name of slice) {
                                             const blob = new Blob([files[name]]);
