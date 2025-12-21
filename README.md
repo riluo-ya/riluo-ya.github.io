@@ -6,4 +6,3 @@
 - [工具箱](https://riluo-ya.github.io/tool/)
 - [H5小游戏](https://riluo-ya.github.io/game/)
 - [赛博月老](https://riluo-ya.github.io/cpdd/)
-- [彩蛋](https://riluo-ya.github.io/sjb/)
