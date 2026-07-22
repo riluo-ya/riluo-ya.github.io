@@ -1,0 +1,180 @@
+/*
+	HTML Starter Template - Font Configurations
+	Original Source: https://github.com/AsisYu/html-starter-qwpicu.git
+	License: Open Source
+	Author: AsisYu
+	Description: Font configurations and typography styles
+*/
+
+/* ===== 字体组合配置 ===== */
+
+/* Milky-Coffee 字体定义 */
+@font-face {
+    font-family: 'Milky-Coffee';
+    src: url('../fonts/Milky-Coffee/MilkyCoffee-gx1yR-2.ttf') format('truetype'),
+         url('../fonts/Milky-Coffee/MilkyCoffee-X3mWd-3.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* 方案1: Milky-Coffee 风格 */
+.font-milky-coffee {
+    --primary-font: 'Milky-Coffee', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    --heading-font: 'Milky-Coffee', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+
+/* 方案2: 现代简约风格 */
+.font-modern {
+    --primary-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    --heading-font: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+
+/* 方案2: 优雅文艺风格 */
+.font-elegant {
+    --primary-font: 'Lora', 'Times New Roman', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', serif;
+    --heading-font: 'Playfair Display', 'Times New Roman', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', serif;
+}
+
+/* 方案3: 科技感风格 */
+.font-tech {
+    --primary-font: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    --heading-font: 'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+
+/* 方案4: 中文字体优化 */
+.font-chinese {
+    --primary-font: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'WenQuanYi Micro Hei', sans-serif;
+    --heading-font: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'WenQuanYi Micro Hei', sans-serif;
+}
+
+/* ===== 应用字体到页面元素 ===== */
+
+/* 默认使用 Milky-Coffee 字体 */
+body {
+    font-family: var(--primary-font, 'Milky-Coffee', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif);
+}
+
+/* 标题使用标题字体 */
+h1, h2, h3, h4, h5, h6,
+.panel-cover__title,
+.panel-cover__subtitle {
+    font-family: var(--heading-font, 'Milky-Coffee', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif);
+}
+
+/* 按钮文字 */
+.pill-button-text {
+    font-family: var(--primary-font, 'Milky-Coffee', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif);
+}
+
+/* 描述文字 */
+.panel-cover__description {
+    font-family: var(--primary-font, 'Milky-Coffee', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif);
+}
+
+/* ===== 字体权重配置 ===== */
+.font-light {
+    font-weight: 300;
+}
+
+.font-normal {
+    font-weight: 400;
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+/* ===== 字体大小配置 ===== */
+.text-xs {
+    font-size: 0.75rem;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+}
+
+.text-base {
+    font-size: 1rem;
+}
+
+.text-lg {
+    font-size: 1.125rem;
+}
+
+.text-xl {
+    font-size: 1.25rem;
+}
+
+.text-2xl {
+    font-size: 1.5rem;
+}
+
+.text-3xl {
+    font-size: 1.875rem;
+}
+
+.text-4xl {
+    font-size: 2.25rem;
+}
+
+/* ===== 特殊效果 ===== */
+.text-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.text-shadow-lg {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ===== 响应式字体大小 ===== */
+@media screen and (max-width: 768px) {
+    .text-responsive {
+        font-size: clamp(0.875rem, 2.5vw, 1.125rem);
+    }
+    
+    .heading-responsive {
+        font-size: clamp(1.5rem, 5vw, 2.5rem);
+    }
+}
+
+/* ===== 字体加载优化 ===== */
+.font-display-swap {
+    font-display: swap;
+}
+
+/* 预加载关键字体 */
+@font-face {
+    font-family: 'Milky-Coffee';
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Playfair Display';
+    font-display: swap;
+}

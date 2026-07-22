@@ -1,127 +1,134 @@
-<!doctype html>
-<html lang="zh" class="no-js">
+
+<!--
+	HTML Starter Template
+	Original Source: https://github.com/AsisYu/html-starter-qwpicu.git
+	License: Open Source
+	Author: AsisYu
+	Description: A beautiful personal homepage template with modern design
+	请尊重劳动成果，保留该注释信息
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RiLuo-ya</title>
-  <meta name="Description" content="Home Page of iissnan">
-  <meta name="color-scheme" content="dark light">
-  <script>(function(H){H.className=H.className.replace(/\bno-js\b/,'js')})(document.documentElement)</script>
-  <link rel="stylesheet" type="text/css" href="assets/css/main.css"/>
+	<title>RiLuo-ya</title>
+	<meta charset="UTF-8">
+	<link rel="icon" href="./favicon.ico">
+	<meta http-equiv="Expires" content="0" />
+	<meta name='robots' content='index,follow'>
+	<meta name='keywords' content='狡猾的肘击 RiLuo-ya,个人主页,狡猾的肘击yu的个人主'>
+	<meta http-equiv="Pragma" content="no-cache" />
+	<meta name='description' content='狡猾的肘击 RiLuo-ya,个人主页,狡猾的肘击yu的个人主'>
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+	<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+	<link rel="stylesheet" href="asset/css/main.css" />
+	<link rel="stylesheet" type="text/css" href="asset/css/iconfont.css">
+	<link rel="stylesheet" type="text/css" href="asset/css/style.css">
+	<link rel="stylesheet" type="text/css" href="asset/css/fonts.css">
+	<link rel="stylesheet" href="https://fastly.jsdelivr.net/gh/volantis-x/cdn-fontawesome-pro@master/css/all.min.css" media="all">
+	<!-- Google Fonts - 推荐字体组合 -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+	<script data-cfasync="false" src="asset/js/feature.js"></script>
+	<noscript>
+		<link rel="stylesheet" href="asset/css/noscript.css" />
+	</noscript>
 </head>
-
-<body>
-  <div class="vi">
-    <h1 class="animate-slide-in-down">RiLuo-ya</h1>
-    <div class="quote">
-      <span class="quote-line quote-line-start animate-slide-in-left"></span>
-      <span class="quote-icon quote-icon-start animate-slide-in-down">
-        <i class="icon icon-quotes-left"></i>
-      </span>
-      <p class="quote-content animate-slide-in-down">不积跬步，无以至千里。不积小流，无以成江海。</p>
-      <p class="quote-author animate-slide-in-down">《劝学篇》—— <em>荀子</em></p>
-      <span class="quote-icon quote-icon-end animate-slide-in-up">
-        <i class="icon icon-quotes-right"></i>
-      </span>
-      <span class="quote-line quote-line-end animate-slide-in-right"></span>
-    </div>
-    <div class="links">
-      <a href="https://github.com/riluo-ya" class="animate-slide-in-down">GitHub</a>
-      <a href="https://riluoblog.cc.cd/" class="animate-slide-in-down">Blog</a>
-      <a href="https://357127.xyz/game/" class="animate-slide-in-down">Game</a>
-      <a href="https://weibo.com/iissnan" class="animate-slide-in-down">Tool</a>
-      <a href="https://357127.xyz/memo-paper/" class="animate-slide-in-down">MEMO-PAPER</a>
-    </div>
-    <div class="location">
-      <span class="location-icon animate-slide-in-up">
-        <i class="icon icon-map-pin"></i>
-      </span>
-      <span class="location-text animate-slide-in-down">XiaMen - China</span>
-    </div>
-    <div class="relocating">
-      Navigating to: <span class="relocate-location"></span>...
-    </div>
-  </div>
-
-  <script src="assets/vendors/jquery-3.3.1.min.js"></script>
-  <script>
-    $(function () {
-      var SLIDE_IN_DOWN = { opacity: 1, top: 0 };
-      var SLIDE_IN_UP = { opacity: 1, bottom: 0 };
-      var SLIDE_IN_LEFT = { left: 0 };
-      var SLIDE_IN_RIGHT = { right: 0 };
-
-      registerCheatCode();
-      executeAnimations();
-
-      function executeAnimations() {
-        $.when()
-          .then(animateTitle)
-          .then(animateQuote)
-          .then(animateLinks)
-          .then(animateLocation);
-      }
-
-      function animateTitle() {
-        return animate('h1', SLIDE_IN_DOWN);
-      }
-
-      function animateQuote() {
-        return $.when(
-          animate('.quote-line-start', SLIDE_IN_LEFT),
-          animate('.quote-line-end',SLIDE_IN_RIGHT),
-          animate('.quote-icon-start', SLIDE_IN_DOWN),
-          animate('.quote-icon-end', SLIDE_IN_UP)
-        )
-          .then(function () {
-            return animate('.quote-content', SLIDE_IN_DOWN);
-          })
-          .then(function () {
-            return animate('.quote-author', SLIDE_IN_DOWN);
-          });
-      }
-
-      function animateLinks() {
-        var DELAY_STEP = 200;
-        var elements = $('.links a');
-        var concurrent = $.makeArray(elements)
-          .map(function (element, index) {
-            return animate(element, SLIDE_IN_DOWN, index * DELAY_STEP);
-          });
-
-        return $.when.apply($, concurrent);
-      }
-
-      function animateLocation() {
-        return $.when(
-          animate('.location-icon', SLIDE_IN_UP),
-          animate('.location-text', SLIDE_IN_DOWN)
-        );
-      }
-
-      function animate(selector, properties, delay, options) {
-        delay = delay || 0;
-        return $(selector).delay(delay)
-          .animate(properties, options)
-          .promise();
-      }
-
-      function registerCheatCode() {
-        $(document.body).on('keydown', function (event) {
-          var KEY_B = 66;
-
-          if (event.which === KEY_B) {
-            $('.relocate-location').text('Bookmark Page');
-            $('.relocating').css('opacity', 1);
-
-            window.setTimeout(function () {
-              window.location.href = '/bookmarks.html';
-            }, 1000);
-          }
-        });
-      }
-    });
-  </script>
+<body class="is-preload font-milky-coffee">
+	<div id="wrapper">
+		<div id="bg"></div>
+		<div id="overlay"></div>
+		<div id="main">
+			<!-- Header -->
+			<header id="header">
+				<div class="panel-main__content">
+					<div class="ih-item circle effect right_to_left">
+						<a class="blog-button">
+							<div class="img"> <img src="https://q.qlogo.cn/headimg_dl?dst_uin=85268832&spec=640&img_type=jpg" alt="img"
+									class="js-avatar iUp profilepic header-logo">
+							</div>
+							<div class="info iUp">
+								<div class="info-back">
+									<img alt="img" src="asset/image/kl.gif" class="js-avatar profilepic">
+								</div>
+							</div>
+						</a>
+					</div>
+					<h1 class="panel-cover__title panel-title iUp">狗凯之家源码网</h1>
+					<p class="panel-cover__subtitle panel-subtitle iUp">be your true self</p>
+					<canvas class="navigation-wrapper iUp" id="canvas" style="width:50%;padding-top: 15px;padding-right: 20px;" width="920"
+						height="350"></canvas>
+					<script src="asset/js/clock.js"></script>
+					
+					<!-- 药丸形状按钮组 -->
+					<div class="pill-buttons-container iUp">
+						<a href="riluoblog.cc.cd" class="pill-button" target="_blank">
+							<div class="pill-button-decor pill-left"></div>
+							<div class="pill-button-decor pill-right"></div>
+							<span class="pill-button-text">博客</span>
+						</a>
+						<a href="https://github.com/riluo-ya" class="pill-button" target="_blank">
+							<div class="pill-button-decor pill-left"></div>
+							<div class="pill-button-decor pill-right"></div>
+							<span class="pill-button-text">项目</span>
+						</a>
+						<a href="https://riluoblog.cc.cd/about/" class="pill-button">
+							<div class="pill-button-decor pill-left"></div>
+							<div class="pill-button-decor pill-right"></div>
+							<span class="pill-button-text">关于</span>
+						</a>
+						<a href="mailto:dy.cm@qq.com" class="pill-button">
+							<div class="pill-button-decor pill-left"></div>
+							<div class="pill-button-decor pill-right"></div>
+							<span class="pill-button-text">联系</span>
+						</a>
+					</div>
+					
+					<!-- 联系方式图标 -->
+					<div class="contact-icons-container iUp">
+						<a href="https://wpa.qq.com/msgrd?v=3&uin=85268832&site=qq&menu=yes" class="contact-icon" target="_blank" title="QQ">
+							<i class="fab fa-qq"></i>
+						</a>
+						<a href="#" class="contact-icon wechat-icon" title="微信">
+							<i class="fab fa-weixin"></i>
+							<div class="wechat-qr">
+								<img src="asset/image/weixin.png" alt="微信二维码">
+							</div>
+						</a>
+						<a href="mailto:85268832@qq.com" class="contact-icon" title="邮箱">
+							<i class="fas fa-envelope"></i>
+						</a>
+						<a href="https://github.com/AsisYu" class="contact-icon" target="_blank" title="GitHub">
+							<i class="fab fa-github"></i>
+						</a>
+						<a href="https://space.bilibili.com/1691468668" class="contact-icon" target="_blank" title="哔哩哔哩">
+							<i class="iconfont icon-bilibili"></i>
+						</a>
+					</div>
+					
+					<hr class="iUp" />
+					<!--一言无法显示时的文字-->
+					<p id="description" class="panel-cover__description iUp">每一个人都应该<span class="highlight-red">明确</span>自己的方向<span class="highlight-green">和</span>位置
+						<strong>-「RiLuo-ya」</strong>
+					</p>
+				</div>
+			</header>
+			<!-- Footer -->
+			<footer id="footer">
+				<p>
+					<b>&copy; 2008 - <script>document.write(new Date().getFullYear());</script><a href="https://qwp.icu" class="active">Yu</a>
+					</b>
+					<b>
+						<a href="https://beian.miit.gov.cn/">没有备案喵～</a>
+					</b>
+				</p>
+			</footer>
+		</div>
+	</div>
+    <script src="https://fastly.jsdelivr.net/npm/sweetalert2@10.15.5/dist/sweetalert2.all.min.js"></script>
+    <script type="text/javascript" src="asset/js/jquery.min.js"></script>
+    <script type="text/javascript" src="asset/js/fetch.min.js"></script>
+    <script type="text/javascript" src="asset/js/main.js"></script>
 </body>
 </html>
