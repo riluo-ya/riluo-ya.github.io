@@ -219,7 +219,7 @@ $('.btn-mobile-menu__icon').click(function () {
 
 //title
 // 在脚本开始时保存原始标题（假设原始标题不包含时间信息）
-var originalTitle = "Yuの主页"; // 根据实际情况调整
+var originalTitle = "RiLuo-yaの主页"; // 根据实际情况调整
 
 function updateTimeTitle() {
   // 获取当前时间
